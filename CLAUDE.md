@@ -10,7 +10,7 @@ và khôi phục ảnh.
 
 | Đường dẫn | Vai trò |
 |---|---|
-| `index.html` | Trang web: mục "Ảnh chạy qua hệ thống" + phần giải thích máy tạo cách xáo |
+| `index.html` | Trang web giải thích khóa bí mật + số khung n tạo ra cách xáo: trình chiếu 7 bước, vì sao 2^128, mã nguồn có chú thích. Ảnh minh họa `anh/nt01_khu_vuon.png` |
 | `anh/` | Người dùng đặt ảnh vào đây (jpg, png, bmp, tif, webp) |
 | `ban_tin_esp32/` | Tùy chọn: bản tin `.bin` bắt thật từ MQTT của ESP32-CAM |
 | `ma_do_an/` | Mã nguồn của đồ án, sao nguyên văn. **Không sửa.** |
@@ -33,7 +33,8 @@ python -m http.server 8000        # xem thử tại http://localhost:8000
    trong `ma_do_an/cpe_core.py` và `ma_do_an/tn16_receiver.py`.
 2. Phần lõi JavaScript trong `index.html` (`sha256`, `hmacTag`, `seedFromTag`, `xoshiroNext`,
    `permFromState`, `permFnv`) chỉ để minh họa và không được đổi thuật toán. Sau mọi chỉnh
-   sửa trang, mở trang và xác nhận mục vân tay ghi "Khớp 4/4".
+   sửa trang, mở trang và xác nhận vân tay chạy ngầm ghi "Khớp 4/4" (console, hoặc thuộc tính
+   `data-van-tay` của thẻ `<html>`); nếu lệch, trang hiện dải cảnh báo đỏ.
 3. `tools/dung_trang.py` tự dừng nếu vân tay Bảng 3.5 lệch hoặc tự kiểm bên nhận TN16 hỏng,
    và báo lỗi nếu có ảnh không khôi phục trùng từng byte. Không nới, không bỏ các phép kiểm này.
 4. Số liệu phải nói rõ đo ở đâu. Số do `tools/` sinh ra là số đo trên **máy tính**
@@ -44,8 +45,10 @@ python -m http.server 8000        # xem thử tại http://localhost:8000
    sẵn có (biến CSS ở `:root`, có chế độ tối, dùng được trên điện thoại).
 7. Số bảng (3.3, 3.5, 4.12, …) theo bản thảo V2.1. Nếu bản cuối của đồ án được đưa vào kho
    thì đối chiếu và sửa lại số bảng.
+8. Trang chỉ giải thích quá trình, không dẫn số liệu đo hay số bảng của đồ án. Mã nguồn trên trang
+   lấy từ Phụ lục C bản V2.10 (C.1–C.3): giữ nguyên từng dòng lệnh, chỉ viết lại chú thích.
 
 ## Khi xong việc
 
 Tóm tắt ngắn: đã đổi gì; kết quả vân tay; số ảnh xử lý; số ảnh khôi phục trùng từng byte;
-phình kích thước trung vị và dải. Commit cả `data/` để trang mở được ngay khi tải kho về.
+phình kích thước trung vị và dải. Commit cả `data/`.

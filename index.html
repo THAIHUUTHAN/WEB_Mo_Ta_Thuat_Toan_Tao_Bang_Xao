@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Mã hóa cảm nhận trên ESP32-CAM — mô hình hệ thống và máy tạo cách xáo</title>
+<title>Máy tạo cách xáo — khóa bí mật và số khung tạo ra cách xáo ảnh</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
@@ -13,7 +13,7 @@
   --led:#E39B00; --led-soft:#FFF1D1; --led-ink:#4A3200;
   --secret:#3446C4; --secret-soft:#E7EAFF;
   --ok:#17784A; --ok-soft:#DDF3E7; --bad:#B42318; --bad-soft:#FDE6E3;
-  --code-bg:#0F1A24; --code-ink:#DCE6EE; --code-muted:#7D93A6; --code-kw:#FFB86B; --code-str:#9BE39B; --code-num:#8FC8FF; --code-fn:#E7C6FF;
+  --code-bg:#0F1A24; --code-ink:#DCE6EE; --code-muted:#8FA4B6; --code-kw:#FFB86B; --code-str:#9BE39B; --code-num:#8FC8FF; --code-fn:#E7C6FF;
   --sans:"Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --mono:"JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
   --toc-h:3rem;
@@ -77,10 +77,7 @@ table{border-collapse:collapse;width:100%}
 .tbl{font-size:.93rem}
 .tbl th,.tbl td{text-align:left;padding:.5rem .6rem;border-bottom:1px solid var(--rule);vertical-align:top}
 .tbl th{font-weight:600;color:var(--muted);font-size:.85rem}
-.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-.okmark{color:var(--ok);font-weight:700}
-.badmark{color:var(--bad);font-weight:700}
-.nw{white-space:nowrap}
+.canh-bao{margin:1rem auto 0;max-width:72rem;padding:.75rem 1rem;border-radius:12px;background:var(--bad-soft);color:var(--bad);font-weight:700}
 
 /* ---- phần thu gọn ---- */
 details.more{margin-top:.75rem;border:1px solid var(--rule);border-radius:12px;background:var(--surface)}
@@ -89,13 +86,12 @@ details.more>summary::-webkit-details-marker{display:none}
 details.more>summary::before{content:"";flex:none;width:.5rem;height:.5rem;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(-45deg);margin-left:.1rem}
 details.more[open]>summary::before{transform:rotate(45deg);margin-top:-.25rem}
 details.more>summary:hover{background:var(--paper)}
-details.more>.inner{padding:.25rem 1rem 1rem}
-details.more .sum-note{font-weight:400;color:var(--muted);font-size:.88rem}
 details.more>summary .st{min-width:0}
+details.more>.inner{padding:.25rem 1rem 1rem}
 
 /* ---- thanh mục lục ---- */
 .toc{position:sticky;top:0;z-index:20;background:var(--paper);background:color-mix(in srgb,var(--paper) 90%,transparent);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border-bottom:1px solid var(--rule)}
-.toc ul{list-style:none;margin:0 auto;display:flex;gap:clamp(.1rem,1.6vw,1.5rem);min-height:var(--toc-h)}
+.toc ul{list-style:none;margin:0 auto;display:flex;gap:clamp(.5rem,2.5vw,2rem);min-height:var(--toc-h)}
 .toc li{display:flex}
 .toc a{display:flex;align-items:center;min-height:44px;padding:0 .35rem;font-size:.92rem;font-weight:600;color:var(--muted);text-decoration:none;white-space:nowrap;border-bottom:2px solid transparent}
 .toc a:hover{color:var(--ink)}
@@ -109,46 +105,7 @@ details.more>summary .st{min-width:0}
 .lead{font-size:clamp(1.05rem,1.6vw,1.2rem);line-height:1.55;max-width:42rem;margin:0}
 .hero .row{margin-top:1.25rem}
 
-/* ---- mục Hệ thống ---- */
-.ht-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.75rem;margin:1.25rem 0 0}
-.ht-metrics .metric{background:var(--surface);border:1px solid var(--rule);border-radius:12px;padding:.7rem .9rem}
-.ht-metrics .k{font-size:.85rem;color:var(--muted)}
-.ht-metrics .v{font-size:1.3rem;font-weight:800;letter-spacing:-.01em;line-height:1.3}
-.ht-metrics .s{font-size:.82rem;color:var(--muted);line-height:1.4}
-.thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(6.5rem,1fr));gap:.5rem;margin:1rem 0}
-.thumb{font:inherit;border:1.5px solid var(--rule);border-radius:10px;background:var(--surface);color:var(--ink);padding:5px;cursor:pointer;text-align:left;min-width:0}
-.thumb img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:6px;image-rendering:pixelated;background:#8a939a}
-.thumb span{display:block;font-size:.74rem;line-height:1.35;margin-top:.3rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.thumb .k{color:var(--muted);margin-top:0}
-.thumb[aria-pressed="true"]{border-color:var(--ink);box-shadow:0 0 0 2px var(--ink) inset}
-.thumb:focus-visible{outline:3px solid var(--secret);outline-offset:2px}
-.ht-detail h3{margin-bottom:.8rem;overflow-wrap:anywhere}
-.flow3{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) auto minmax(0,1fr);gap:.5rem;align-items:center}
-.flow3 figure{margin:0;width:100%;max-width:320px;justify-self:center}
-.flow3 img{display:block;width:100%;aspect-ratio:4/3;border-radius:7px;image-rendering:pixelated;background:#8a939a}
-.flow3 .arrow{font-size:1.3rem;color:var(--muted);text-align:center}
-.flow3 .cap b{color:var(--ink);font-weight:600;display:block}
-.flow3 .none{aspect-ratio:4/3;border-radius:7px;border:1.5px dashed var(--rule-strong);display:grid;place-items:center;text-align:center;font-size:.85rem;color:var(--muted);padding:.5rem}
-.facts{margin-top:1rem}
-.facts th{width:12rem;font-size:.88rem}
-.facts td{font-size:.95rem}
-.pkt{display:flex;flex-wrap:wrap;gap:5px;margin:.5rem 0 .25rem}
-.seg{border:1px solid var(--rule-strong);border-radius:8px;padding:.3rem .5rem;text-align:center;background:var(--paper)}
-.seg .b{font-family:var(--mono);font-size:.86rem;font-weight:600;display:block}
-.seg .l{font-size:.72rem;color:var(--muted);display:block}
-.seg.cnt{border-color:var(--secret)}
-.seg.cnt .b{color:var(--secret)}
-.seg.jpg{border-style:dashed}
-.perm{font-family:var(--mono);font-size:.88rem}
-.dl{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1rem}
-.dl a{font-size:.88rem;font-weight:600;color:var(--ink);border:1.5px solid var(--ink);border-radius:9px;padding:.45rem .75rem;text-decoration:none;min-height:40px;display:inline-flex;align-items:center}
-.dl a:hover{background:var(--paper)}
-.rowsel{cursor:pointer}
-.rowsel:hover td{background:var(--paper)}
-.rowsel.sel td{background:var(--led-soft)}
-.log{font-family:var(--mono);font-size:.78rem;line-height:1.55;background:var(--paper);border-radius:10px;padding:.8rem;margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
-
-/* ---- mục Cách xáo: trình chiếu từng bước ---- */
+/* ---- trình chiếu từng bước ---- */
 .show{display:grid;grid-template-columns:minmax(0,1fr) 338px;grid-template-areas:"bar stage" "slides stage" "facts stage";grid-template-rows:auto auto 1fr;gap:1rem clamp(1rem,3vw,2rem);margin-top:1.25rem}
 .show-bar{grid-area:bar;display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"prev dots next" "prev pos next";align-items:center;gap:0 .5rem}
 #showPrev{grid-area:prev}
@@ -215,6 +172,7 @@ details.more>summary .st{min-width:0}
 .draws th,.draws td{padding:.4rem .5rem;white-space:nowrap}
 .draws th{white-space:normal;vertical-align:bottom}
 .worked{margin:.7rem 0 0;font-size:.92rem;background:var(--paper);border-radius:10px;padding:.6rem .8rem}
+.perm{font-family:var(--mono);font-size:.88rem}
 
 /* ---- mục Vì sao 2^128 ---- */
 .why{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:clamp(1rem,3vw,2rem);margin-top:1.25rem;align-items:start}
@@ -229,19 +187,7 @@ details.more>summary .st{min-width:0}
 .claims li::before{content:"";position:absolute;left:0;top:.62em;width:.45rem;height:.45rem;border-radius:2px;background:var(--led)}
 .limits{margin:0;padding-left:1.2rem;display:grid;gap:.6rem;font-size:.95rem}
 
-/* ---- mục Kiểm chứng ---- */
-.status{display:flex;align-items:center;gap:.7rem;margin-top:1rem;padding:.75rem 1rem;border-radius:12px;font-weight:700;background:var(--ok-soft);color:var(--ok)}
-.status.bad{background:var(--bad-soft);color:var(--bad)}
-.status::before{content:"✓";flex:none;display:grid;place-items:center;width:1.7rem;height:1.7rem;border-radius:50%;background:var(--ok);color:var(--surface);font-size:1rem}
-.status.bad::before{content:"!";background:var(--bad)}
-.fp td.got,.fp td.exp{font-family:var(--mono);font-size:.86rem;word-break:break-word}
-.badge{display:inline-block;font-weight:700;font-size:.85rem;padding:.15rem .55rem;border-radius:6px}
-.badge.ok{background:var(--ok-soft);color:var(--ok)}
-.badge.bad{background:var(--bad-soft);color:var(--bad)}
-
 /* ---- mục Mã nguồn ---- */
-.q3{font-size:.92rem}
-.q3 td:first-child{font-weight:700;white-space:nowrap}
 .tabs{display:flex;flex-wrap:wrap;gap:.3rem;margin:1.25rem 0 0;border-bottom:1px solid var(--rule)}
 .tab{font:inherit;font-size:.9rem;font-weight:600;padding:.55rem .85rem;border:1px solid transparent;border-bottom:0;border-radius:10px 10px 0 0;background:transparent;color:var(--muted);cursor:pointer;margin-bottom:-1px;min-height:44px}
 .tab[aria-selected="true"]{background:var(--code-bg);color:var(--code-ink);border-color:var(--code-bg)}
@@ -253,10 +199,6 @@ details.more>summary .st{min-width:0}
 .copy:hover,.codefoot .more:hover{background:rgba(255,255,255,.08)}
 .copy:focus-visible,.codefoot .more:focus-visible{outline:3px solid var(--code-num);outline-offset:2px}
 .codepanel:not(.full) .codebody{max-height:420px;overflow-y:auto}
-.codepanel:not(.full) .extra{display:none}
-.codepanel.full .corelabel{display:none}
-.cut,.corelabel{font-size:.84rem;color:var(--code-muted);padding:.5rem 1.1rem;border-bottom:1px dashed rgba(255,255,255,.12);background:rgba(255,255,255,.03)}
-.cut{border-top:1px dashed rgba(255,255,255,.12)}
 .codepanel pre{margin:0;overflow-x:auto;padding:.75rem 1.1rem}
 .codepanel code{font-family:var(--mono);font-size:.84rem;line-height:1.6;white-space:pre;color:var(--code-ink);background:transparent}
 .codefoot{padding:.5rem 1.1rem .4rem;border-top:1px solid rgba(255,255,255,.08)}
@@ -275,36 +217,25 @@ footer p+p{margin-top:.3rem}
 @media (max-width:900px){
   .hero-grid{grid-template-columns:minmax(0,1fr)}
   .hero .frame{width:100%;max-width:338px}
-  .ht-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
   .show{grid-template-columns:minmax(0,1fr);grid-template-areas:"bar" "slides" "stage" "facts";grid-template-rows:none}
   .slide:not(.on){display:none}
   .stage .pair{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
   .why{grid-template-columns:minmax(0,1fr)}
 }
 @media (max-width:760px){
-  .flow3{grid-template-columns:minmax(0,1fr)}
-  .flow3 .arrow{transform:rotate(90deg);line-height:1}
   .toy-grid{grid-template-columns:minmax(0,1fr)}
-  /* bảng xếp thành thẻ để không phải cuộn ngang */
-  table.stack thead{display:none}
-  table.stack tr{display:block;border-bottom:1px solid var(--rule);padding:.35rem 0}
-  table.stack td{display:flex;justify-content:space-between;gap:.75rem;border:0;padding:.2rem .1rem;white-space:normal;text-align:right}
-  table.stack td::before{content:attr(data-label);color:var(--muted);font-size:.85rem;text-align:left;flex:none;max-width:48%}
-  table.stack td.got,table.stack td.exp{overflow-wrap:anywhere}
-  .facts th{width:38%}
 }
 @media (max-width:560px){
   body{font-size:1rem}
-  .toc ul{justify-content:space-between;gap:0;padding:0 .4rem}
-  .toc a{font-size:.8rem;padding:0 .3rem}
+  .toc ul{justify-content:space-around;gap:0;padding:0 .4rem}
+  .toc a{font-size:.85rem}
   .dip{grid-template-columns:repeat(16,minmax(0,1fr))}
   .tiles{grid-template-columns:5.5rem 1fr}
-  .thumbs{grid-template-columns:repeat(auto-fill,minmax(4.75rem,1fr))}
   .show-bar{grid-template-areas:"dots dots dots" "prev pos next";gap:.25rem .5rem}
-  .codepanel code{font-size:.78rem}
   .draws{font-size:.82rem}
   .draws th,.draws td{padding:.35rem .3rem}
   .codehead .src{flex-basis:100%}
+  .codepanel code{font-size:.78rem}
 }
 @media (prefers-reduced-motion: reduce){ .tile{transition:none} }
 </style>
@@ -313,20 +244,20 @@ footer p+p{margin-top:.3rem}
 
 <nav class="toc" aria-label="Mục lục">
   <ul class="wrap">
-    <li><a href="#he-thong">Hệ thống</a></li>
     <li><a href="#cach-xao">Cách xáo</a></li>
     <li><a href="#vi-sao-2-128">Vì sao 2<sup>128</sup></a></li>
-    <li><a href="#van-tay">Kiểm chứng</a></li>
     <li><a href="#ma-nguon">Mã nguồn</a></li>
   </ul>
 </nav>
 
+<p class="canh-bao" id="vanTayLoi" role="alert" hidden></p>
+
 <header class="wrap hero">
   <div class="hero-grid">
     <div>
-      <p class="eyebrow">Đồ án tốt nghiệp · Mã hóa cảm nhận trong IoT · Phương án PP-C</p>
+      <p class="eyebrow">Minh họa: khóa bí mật + số khung → cách xáo ảnh</p>
       <h1>Máy tạo cách xáo</h1>
-      <p class="lead">Mỗi khung ảnh của ESP32-CAM được cắt thành 1&nbsp;200 ô và xáo theo khóa bí mật; máy chủ có cùng khóa nên xếp lại được đúng ảnh gốc.</p>
+      <p class="lead">Khóa bí mật được trộn với số thứ tự khung để xáo 1&nbsp;200 ô của ảnh; bên nhận có cùng khóa nên tạo lại đúng cách xáo và xếp ảnh về như cũ.</p>
       <div class="row">
         <button class="btn primary" id="heroNext" type="button">Khung tiếp theo</button>
         <button class="btn" id="heroUndo" type="button">Bên nhận xếp lại</button>
@@ -334,41 +265,19 @@ footer p+p{margin-top:.3rem}
     </div>
     <figure class="frame">
       <canvas id="heroCanvas" width="320" height="240" aria-label="Ảnh 320 × 240 gồm 1 200 ô đang được xáo hoặc xếp lại"></canvas>
-      <figcaption class="cap" id="heroCap">Khung số 0, khóa thử của đồ án</figcaption>
+      <figcaption class="cap" id="heroCap">Khung số 0, khóa thử</figcaption>
     </figure>
   </div>
 </header>
 
 <main>
-<section id="he-thong">
-  <div class="wrap">
-    <div class="prose">
-      <h2>Ảnh chạy qua hệ thống</h2>
-      <p class="intro">Mỗi ảnh trong thư mục <code class="inline">anh/</code> đi trọn đường của hệ thống: bên gửi xáo 1&nbsp;200 ô, nén JPEG và đóng gói bản tin; bên nhận kiểm CRC, giải nén và trả các ô về chỗ cũ.</p>
-      <p>Cả hai bên gọi thẳng mã của đồ án: bản tin có 12 byte tiêu đề như firmware ESP32, bên nhận dùng nguyên hàm <code class="inline">parse_frame</code> và <code class="inline">decode_frame</code> của <code class="inline">tn16_receiver.py</code>.</p>
-      <p class="note">Đây là số đo trên máy tính, dùng bộ nén JPEG của Pillow, không phải bộ nén trên ESP32. Bản tin bắt thật từ ESP32-CAM (nếu có trong <code class="inline">ban_tin_esp32/</code>) được ghi rõ là bản tin thật.</p>
-    </div>
-    <div class="panel" id="htEmpty" hidden style="margin-top:1.25rem;max-width:46rem">
-      <h3>Chưa có ảnh nào được xử lý</h3>
-      <p style="margin:0">Đặt ảnh vào thư mục <code class="inline">anh/</code>, chạy <code class="inline">python tools/dung_trang.py</code>, rồi tải lại trang này.</p>
-    </div>
-    <div id="htBody" hidden>
-      <div class="ht-metrics" id="htMetrics"></div>
-      <div class="thumbs" id="htThumbs" role="group" aria-label="Chọn ảnh để xem"></div>
-      <div class="panel ht-detail" id="htDetail" aria-live="polite"></div>
-      <details class="more" id="htTongHop"><summary><span class="st">Bảng tổng hợp mọi ảnh <span class="sum-note" id="htTongHopNote"></span></span></summary><div class="inner"><table class="tbl stack" id="htTable"></table></div></details>
-      <details class="more"><summary><span class="st">Tham số chạy, vân tay và nhật ký tự kiểm bên nhận</span></summary><div class="inner"><pre class="log" id="htLog"></pre></div></details>
-    </div>
-  </div>
-</section>
-
 <section id="cach-xao">
-  <span id="ti-hon"></span><span id="may-that"></span>
+  <span id="he-thong"></span><span id="ti-hon"></span><span id="may-that"></span>
   <div class="wrap">
     <div class="prose">
       <h2>Cách xáo được tạo ra như thế nào</h2>
-      <p class="intro">Thiết bị tạo cách xáo từ khóa bí mật và số khung; máy chủ có cùng khóa nên tạo lại được đúng cách xáo ấy.</p>
-      <p>Lúc mở trang, máy dùng khóa thử <code class="inline">00 01 02 … 1f</code> và khung số 0, đúng cấu hình đã sinh ra bộ vân tay ở Bảng 3.5. Bấm <b>Sau</b> hoặc phím mũi tên ← → để đi qua 7 bước; ảnh gốc và ảnh đã xáo đổi theo mỗi lần bấm nút.</p>
+      <p class="intro">Thiết bị trộn khóa bí mật với số khung n để ra một cách xáo; bên nhận có cùng khóa và đọc được n nên tạo lại đúng cách xáo ấy.</p>
+      <p>Lúc mở trang, máy dùng khóa thử <code class="inline">00 01 02 … 1f</code> và khung số 0. Bấm <b>Sau</b> hoặc phím mũi tên ← → để đi qua 7 bước; ảnh gốc và ảnh đã xáo đổi theo mỗi lần bấm nút.</p>
     </div>
     <div class="show" role="region" aria-roledescription="trình chiếu" aria-label="Bảy bước tạo cách xáo">
       <div class="show-bar">
@@ -398,9 +307,9 @@ footer p+p{margin-top:.3rem}
           </div>
         </div>
 
-        <div class="slide panel" data-ten="Khóa chủ" role="group" aria-roledescription="bước" aria-label="Bước 2: Khóa chủ" tabindex="-1">
-          <h3><span class="so">2.</span>Khóa chủ <span class="tag secret">bí mật</span></h3>
-          <p class="txt">32 byte, chỉ nằm trong thiết bị và máy chủ, không bao giờ gửi qua mạng. Khóa thử của đồ án là 00 01 02 … 1f; hệ thật phải dùng khóa sinh ngẫu nhiên và nạp riêng.</p>
+        <div class="slide panel" data-ten="Khóa bí mật" role="group" aria-roledescription="bước" aria-label="Bước 2: Khóa bí mật" tabindex="-1">
+          <h3><span class="so">2.</span>Khóa bí mật <span class="tag secret">bí mật</span></h3>
+          <p class="txt">32 byte, chỉ thiết bị và bên nhận biết, không bao giờ gửi qua mạng. Trang dùng khóa thử 00 01 02 … 1f để dễ theo dõi; hệ thật phải dùng khóa sinh ngẫu nhiên.</p>
           <div class="box">
             <div class="hex" id="keyHex"></div>
             <div class="row" style="margin-top:.75rem">
@@ -412,8 +321,8 @@ footer p+p{margin-top:.3rem}
         </div>
 
         <div class="slide panel" data-ten="Số thứ tự khung" role="group" aria-roledescription="bước" aria-label="Bước 3: Số thứ tự khung" tabindex="-1">
-          <h3><span class="so">3.</span>Số thứ tự khung <span class="tag public">công khai</span></h3>
-          <p class="txt">Tăng thêm 1 sau mỗi khung và được gửi kèm ảnh. Nó được viết thành 8 byte: 4 byte số khung, 4 byte tham số r luôn bằng 0 với PP-C.</p>
+          <h3><span class="so">3.</span>Số thứ tự khung n <span class="tag public">công khai</span></h3>
+          <p class="txt">Tăng thêm 1 sau mỗi khung và được gửi kèm ảnh, ai cũng đọc được. Nó được viết thành 8 byte: 4 byte số khung, 4 byte tham số r luôn bằng 0.</p>
           <div class="box">
             <div class="row">
               <button class="btn small" id="nMinus" type="button" aria-label="Khung trước">−</button>
@@ -427,7 +336,7 @@ footer p+p{margin-top:.3rem}
 
         <div class="slide panel" data-ten="Máy trộn HMAC-SHA256" role="group" aria-roledescription="bước" aria-label="Bước 4: Máy trộn HMAC-SHA256" tabindex="-1">
           <h3><span class="so">4.</span>Máy trộn HMAC-SHA256 <span class="tag public">công khai</span></h3>
-          <p class="txt">Trộn khóa chủ với 8 byte ở bước 3 thành 32 byte trông như ngẫu nhiên: cùng đầu vào luôn ra cùng kết quả, đổi đầu vào một chút thì kết quả khác hẳn, nhìn kết quả không suy ngược ra được khóa. Chỉ 16 byte đầu được dùng tiếp. Giữa hai khung liền nhau, máy trộn làm khoảng một nửa số công tắc ở bước 5 đổi thế, trung bình 64 trên 128.</p>
+          <p class="txt">Trộn khóa với 8 byte ở bước 3 thành 32 byte trông như ngẫu nhiên: cùng đầu vào luôn ra cùng kết quả, đổi đầu vào một chút thì kết quả khác hẳn, nhìn kết quả không suy ngược ra được khóa. Chỉ 16 byte đầu được dùng tiếp. Giữa hai khung liền nhau, khoảng một nửa số công tắc ở bước 5 đổi thế, trung bình 64 trên 128.</p>
           <div class="box">
             <div class="hex" id="tagHex"></div>
             <p class="note" style="margin:.5rem 0 0"><span style="color:var(--secret);font-weight:600">16 byte đầu</span> đi tiếp sang bước 5; 16 byte sau bỏ đi.</p>
@@ -450,7 +359,7 @@ footer p+p{margin-top:.3rem}
 
         <div class="slide panel" data-ten="Cách xáo và ảnh gửi đi" role="group" aria-roledescription="bước" aria-label="Bước 7: Cách xáo và ảnh gửi đi" tabindex="-1">
           <h3><span class="so">7.</span>Cách xáo và ảnh gửi đi</h3>
-          <p class="txt">Kết quả là một bảng 1&nbsp;200 dòng: ô thứ i của ảnh gửi đi lấy từ ô nào của ảnh gốc. Ảnh đã xáo được nén JPEG rồi gửi đi; bảng thì không bao giờ rời thiết bị. Máy chủ có cùng khóa chủ, nhận số khung, chạy lại đúng các bước trên và trả từng ô về chỗ cũ.</p>
+          <p class="txt">Kết quả là một bảng 1&nbsp;200 dòng: ô thứ i của ảnh gửi đi lấy từ ô nào của ảnh gốc. Ảnh đã xáo được nén JPEG rồi gửi đi kèm số khung; bảng thì không bao giờ rời thiết bị. Bên nhận có cùng khóa, đọc số khung, chạy lại đúng các bước trên rồi trả từng ô về chỗ cũ.</p>
           <div class="box"><p style="margin:0;font-size:.93rem">Tám dòng đầu của bảng: <span class="perm" id="permHead"></span></p></div>
         </div>
       </div>
@@ -491,344 +400,212 @@ footer p+p{margin-top:.3rem}
       </div>
       <ul class="claims">
         <li><strong>Không thể nhiều hơn.</strong> 1&nbsp;200 ô có số cách xếp lớn khủng khiếp, một số hơn 3&nbsp;000 chữ số, nhưng máy chỉ tạo được cách xáo ứng với một thế công tắc, giống máy bán hàng chỉ đưa ra món có nút bấm.</li>
-        <li><strong>Không bị co lại.</strong> Máy rút thăm chỉ dùng số nguyên và phép biến đổi một đổi một, nên hai thế công tắc khác nhau không bao giờ nhập làm một. PP-A tính bằng số thực float32 nên 8&nbsp;388&nbsp;608 khả năng trên giấy chỉ còn 190&nbsp;277 cách xáo thật (Bảng 4.12), đủ nhỏ để dựng bảng tra phá được trong khoảng 11 giây.</li>
-        <li><strong>Tối đa 2<sup>128</sup> − 1.</strong> Thế “tắt hết” bị máy rút thăm loại; khác biệt này không đáng kể.</li>
+        <li><strong>Không bị co lại.</strong> Máy rút thăm chỉ dùng số nguyên và những phép biến đổi không làm mất thông tin, nên các thế công tắc khác nhau không bị gộp lại như khi làm tròn số thực.</li>
+        <li><strong>Tối đa 2<sup>128</sup> − 1.</strong> Thế “tắt hết” không dùng được vì máy rút thăm khi ấy chỉ nhả ra số 0; khác biệt này không đáng kể.</li>
       </ul>
     </div>
     <details class="more" id="gioi-han">
-      <summary><span class="st">Nói đúng về con số 2<sup>128</sup>: bốn điều nên nói kèm trước hội đồng</span></summary>
+      <summary><span class="st">Nói đúng về con số 2<sup>128</sup></span></summary>
       <div class="inner">
         <ol class="limits">
-          <li><strong>Là số đếm theo thiết kế.</strong> 2<sup>128</sup> được đếm từ số công tắc, không đo bằng cách thử hết vì không thể thử hết. Bằng chứng thực nghiệm đi kèm: bảng tra đã phá được PP-A thì với PP-C cho Dc = 0,0000 (Bảng 4.12).</li>
-          <li><strong>Dựa trên một giả định chuẩn.</strong> Máy trộn HMAC-SHA256 được giả định là không đoán được đầu ra nếu không có khóa (RFC 2104). Đồ án không tự chứng minh điều này; mọi hệ thống thực tế đều dựa vào nó.</li>
-          <li><strong>Bước rút thăm lệch rất nhẹ.</strong> Phép nhân rồi dịch 32 bit không có bước loại bỏ của phương pháp Lemire đầy đủ. Mỗi lượt lệch tối đa khoảng 3 × 10<sup>−7</sup>; không làm giảm số cách xáo.</li>
-          <li><strong>Khóa thử chỉ để đối chiếu.</strong> 00 01 … 1f là khóa thí nghiệm dùng chung cho máy tính và thiết bị để so vân tay. Hệ thật phải sinh khóa ngẫu nhiên bằng phần cứng và nạp riêng.</li>
+          <li><strong>Là số đếm theo thiết kế.</strong> 2<sup>128</sup> được đếm từ số công tắc, không đo bằng cách thử hết, vì không ai thử hết được.</li>
+          <li><strong>Dựa vào một giả định chuẩn.</strong> HMAC-SHA256 được coi là không đoán được kết quả nếu không có khóa. Mọi hệ thống dùng HMAC đều dựa vào giả định này.</li>
+          <li><strong>Khóa trên trang chỉ để minh họa.</strong> 00 01 … 1f là khóa thử để ai cũng tính lại được. Hệ thật phải sinh khóa ngẫu nhiên và nạp riêng vào thiết bị.</li>
         </ol>
       </div>
     </details>
   </div>
 </section>
 
-<section id="van-tay">
-  <div class="wrap">
-    <div class="prose">
-      <h2>Kiểm chứng: đúng thuật toán của đồ án</h2>
-      <p class="intro">Trang tự tính lại các giá trị của Bảng 3.5, vốn đã khớp từng bit giữa máy tính và ESP32, rồi so với giá trị kỳ vọng.</p>
-    </div>
-    <p class="status" id="fpSum" aria-live="polite"></p>
-    <details class="more">
-      <summary><span class="st">Bảng 4 vân tay: kỳ vọng và giá trị trang tính được</span></summary>
-      <div class="inner">
-        <table class="tbl fp stack">
-          <thead><tr><th>Đại lượng kiểm</th><th>Kỳ vọng (Bảng 3.5)</th><th>Trang này tính được</th><th>Kết quả</th></tr></thead>
-          <tbody id="fpBody"></tbody>
-        </table>
-      </div>
-    </details>
-  </div>
-</section>
-
 <section id="ma-nguon">
+  <span id="van-tay"></span>
   <div class="wrap">
     <div class="prose">
-      <h2>Mã nguồn tạo cách xáo trong đồ án</h2>
-      <p class="intro">Ba thẻ đầu trích nguyên văn mã nguồn của đồ án; thẻ cuối là bản JavaScript mà trang này đang chạy.</p>
-      <p>Mỗi thẻ mở sẵn đoạn cốt lõi; bấm “Xem toàn bộ đoạn trích” để xem phần còn lại.</p>
+      <h2>Mã nguồn tạo cách xáo</h2>
+      <p class="intro">Mã dưới đây giữ nguyên từng dòng lệnh của đồ án; chỉ phần chú thích được viết lại để dễ hiểu.</p>
+      <p>Chú thích ghi số bước tương ứng ở phần trình chiếu phía trên. Mỗi khung mã cuộn được bên trong; bấm “Xem toàn bộ đoạn mã” để mở hết.</p>
     </div>
-    <details class="more" style="max-width:56rem">
-      <summary><span class="st">Bảy quy ước hai bên phải hiểu giống hệt nhau (Bảng 3.3)</span></summary>
-      <div class="inner">
-        <p class="note" style="margin:0 0 .5rem">Hiểu lệch bất kỳ quy ước nào thì bên nhận không khôi phục được ảnh.</p>
-        <table class="tbl q3">
-          <tbody>
-            <tr><td>Q1</td><td>Bản tin dẫn xuất M = be32(counter) ‖ be32(r), dài 8 byte</td></tr>
-            <tr><td>Q2</td><td>Thẻ T = HMAC-SHA256(K_master, M), dài 32 byte</td></tr>
-            <tr><td>Q3</td><td>Trạng thái bộ sinh: s[k] là số nguyên 32 bit không dấu đọc big-endian từ T[4k…4k+3], k = 0…3</td></tr>
-            <tr><td>Q4</td><td>Bộ sinh xoshiro128**, cập nhật trạng thái theo đúng thứ tự phép toán chuẩn</td></tr>
-            <tr><td>Q5</td><td>Chỉ số hoán vị j = (uint64)next() × (i + 1) ≫ 32, phương pháp Lemire, không dùng phép chia dư</td></tr>
-            <tr><td>Q6</td><td>Fisher–Yates duyệt giảm dần, i chạy từ B − 1 về 1</td></tr>
-            <tr><td>Q7</td><td>Khối đích thứ i nhận nội dung của khối nguồn thứ π(i); phép nghịch đảo làm ngược lại</td></tr>
-          </tbody>
-        </table>
-        <p class="note" style="margin:.75rem 0 0">Khi đối chiếu: chú thích trong mã nguồn dùng cách đánh số cũ, trong đó PP-C là Q7 và Lemire là Q7b; Bảng 3.3 đánh số lại thành Q1–Q7 như trên. Thuật toán giống hệt nhau, chỉ khác cách đánh số.</p>
-      </div>
-    </details>
 
-    <div class="tabs" role="tablist" aria-label="Các tệp mã nguồn">
-      <button class="tab" role="tab" id="tab-py" aria-controls="pane-py" aria-selected="true" type="button">cpe_core.py</button>
-      <button class="tab" role="tab" id="tab-c" aria-controls="pane-c" aria-selected="false" tabindex="-1" type="button">Firmware ESP32 (C)</button>
-      <button class="tab" role="tab" id="tab-rx" aria-controls="pane-rx" aria-selected="false" tabindex="-1" type="button">Bên nhận</button>
-      <button class="tab" role="tab" id="tab-js" aria-controls="pane-js" aria-selected="false" tabindex="-1" type="button">Bản JavaScript của trang</button>
+    <div class="tabs" role="tablist" aria-label="Các đoạn mã nguồn">
+      <button class="tab" role="tab" id="tab-py" aria-controls="pane-py" aria-selected="true" type="button">Python: sinh cách xáo</button>
+      <button class="tab" role="tab" id="tab-ap" aria-controls="pane-ap" aria-selected="false" tabindex="-1" type="button">Python: xáo và xếp lại ảnh</button>
+      <button class="tab" role="tab" id="tab-c" aria-controls="pane-c" aria-selected="false" tabindex="-1" type="button">C trên ESP32-CAM</button>
     </div>
     <div class="codepanel" role="tabpanel" id="pane-py" aria-labelledby="tab-py">
-      <div class="codehead"><div class="src"><b>cpe_core.py</b>, nhân tham chiếu dùng chung cho máy chủ và mọi thí nghiệm (mục 3.4). Trích nguyên văn; phần PP-A cũ được lược. Tệp đầy đủ: <a href="ma_do_an/cpe_core.py" style="color:var(--code-num)">ma_do_an/cpe_core.py</a>.</div><button class="copy" type="button" data-copy="pane-py" data-cmt="#">Sao chép đoạn trích</button></div>
-      <div class="codebody" id="body-py">
-        <div class="corelabel">Đoạn cốt lõi: bộ sinh PP-C (xoshiro128**, Fisher–Yates, Lemire).</div>
-        <pre class="extra"><code class="language-python">#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-cpe_core.py — NHÂN THAM CHIẾU CHÍNH TẮC của hệ CPE (Encryption-then-Compression)
-Đồ án: Thái Hữu Thân — AT19A — AT190149 — GVHD: ThS. Hoàng Thu Phương
+      <div class="codehead"><div class="src"><b>Sinh cách xáo.</b> Từ khóa bí mật và số khung n ra bảng xáo 1&nbsp;200 ô. Bên gửi và bên nhận chạy cùng đoạn mã này nên ra cùng một bảng.</div><button class="copy" type="button" data-copy="pane-py">Sao chép đoạn mã</button></div>
+      <div class="codebody" id="body-py"><pre><code class="language-python"># Các tên dùng sẵn ở đầu tệp: thư viện hmac, hashlib, struct của Python;
+# K_MASTER_TEST là khóa thử 32 byte (00 01 … 1f); NBLK = 1200 ô.
 
-ĐÂY LÀ FILE GỐC DUY NHẤT. Mọi script thí nghiệm (TN0..TN9) phải import từ đây,
-không được cài đặt lại thuật toán. Nhân này đã bị dựng lại NĂM LẦN trong quá trình
-chuẩn bị; lần này mọi quy ước đều được viết thành hằng số và chú thích có thể kiểm
-chứng bằng cpe_vantay.py.
+# Bước 2–4. Máy trộn: từ khóa bí mật và số khung n ra 32 byte T.
+# - Số khung n và tham số r (luôn bằng 0) được viết thành 8 byte,
+#   mỗi số 4 byte, byte lớn đứng trước ('&gt;II').
+# - HMAC-SHA256 trộn 8 byte đó với khóa thành 32 byte trông như ngẫu nhiên.
+#   Cùng khóa, cùng n thì luôn ra cùng T; n đổi 1 là T khác hẳn;
+#   nhìn T không suy ngược ra được khóa.
+# - "&amp; 0xFFFFFFFF" chỉ giữ lại 32 bit thấp, cho chắc số vừa 4 byte.
+def hmac_tag(counter_n, r=0, key=K_MASTER_TEST):
+    M = struct.pack('&gt;II', counter_n &amp; 0xFFFFFFFF, r &amp; 0xFFFFFFFF)
+    return hmac.new(key, M, hashlib.sha256).digest()
 
-BẢY QUY ƯỚC BẮT BUỘC (thiếu bất kỳ cái nào là bên nhận KHÔNG giải mã được):
-  Q1. Bản tin dẫn xuất: M = be32(counter_n) || be32(r)          — 8 byte
-  Q2. Thẻ:              T = HMAC-SHA256(K_master, M)            — 32 byte
-  Q3. Hạt giống:        u23 = (T[0]&lt;&lt;16 | T[1]&lt;&lt;8 | T[2]) &amp; 0x7FFFFF
-                        x0  = float32((u23 + 0.5) / 8388608.0)
-  Q4. Bước lặp float32: x &lt;- (r*x)*(1-x)  TÍNH TỪ TRÁI SANG PHẢI, r = 3.99f
-      *** KHÔNG được viết r*(x*(1-x)) — cho quỹ đạo KHÁC HẲN, xem §so sánh dưới.
-      *** KHÔNG được để trình biên dịch hợp nhất FMA: bắt buộc -ffp-contract=off
-  Q5. WARMUP = 150 bước, bỏ đi.
-  Q6. PP-A Fisher-Yates giảm dần: với i = N-1..1
-        y = (2/pi) * asin(sqrt(x))   &lt;-- tính từ x HIỆN TẠI
-        j = floor(y * (i+1))         &lt;-- ép về [0..i]
-        swap(p[i], p[j])
-        x = step(x)                  &lt;-- LẶP X SAU KHI ĐÃ DÙNG
-  Q7. PP-C xoshiro128**: s[k] = uint32 BIG-ENDIAN từ T[4k..4k+3], k = 0..3
-        j = (uint32)((uint64)next() * (i+1) &gt;&gt; 32)   &lt;-- LEMIRE, không chia dư
-"""
-import hmac, hashlib, struct, math, array
-import numpy as np
-
-# ------------------------- Tham số hệ thống đã chốt -------------------------
-W, H          = 320, 240          # QVGA xám
-BS            = 8                 # kích thước khối
-NBLK          = (W // BS) * (H // BS)   # 1200
-FRAME_BYTES   = W * H             # 76800
-R_LOGISTIC    = 3.99
-WARMUP        = 150
-SHORT_CYCLE_T = 1350              # ngưỡng chu kỳ ngắn -&gt; retry-nonce
-K_MASTER_TEST = bytes(range(32))  # KHÓA THÍ NGHIỆM: 00 01 02 ... 1f
-
-_f32  = np.float32
-_R    = _f32(R_LOGISTIC)
-_ONE  = _f32(1.0)
-_C2PI = _f32(2.0 / math.pi)
-
-# ------------------------------- Q1..Q3 -------------------------------------
-def hmac_tag(counter_n: int, r: int = 0, key: bytes = K_MASTER_TEST) -&gt; bytes:
-    """Q1 + Q2. M = be32(counter_n) || be32(r); T = HMAC-SHA256(K, M)."""
-    return hmac.new(key, struct.pack('&gt;II', counter_n &amp; 0xFFFFFFFF, r &amp; 0xFFFFFFFF),
-                    hashlib.sha256).digest()</code></pre>
-        <div class="cut extra">Lược phần PP-A (Logistic Map float32, dòng 53–103 của tệp): phương án cũ, đã được thay bằng PP-C.</div>
-        <pre><code class="language-python"># --------------------------------- Q7 ---------------------------------------
+# Bước 6 (phần rút thăm). Máy rút thăm xoshiro128**.
+# - Nó giữ 4 số 32 bit làm "trạng thái" (self.s).
+# - Mỗi lần gọi next(), nó tính ra một số từ 0 đến 4 294 967 295,
+#   rồi khuấy 4 số trạng thái bằng dịch bit, XOR và xoay vòng
+#   để lần sau ra số khác.
+# - Chỉ dùng số nguyên, không dùng số thực, nên máy tính và ESP32
+#   luôn ra cùng một dãy số.
 class Xoshiro128SS:
-    """xoshiro128** — chỉ dùng số nguyên 32 bit, KHÔNG có rủi ro lệch nền tảng."""
-    __slots__ = ('s',)
+    """Máy rút thăm xoshiro128**: chỉ dùng số nguyên 32 bit."""
     def __init__(self, s):
         self.s = [v &amp; 0xFFFFFFFF for v in s]
+    # Xoay vòng x sang trái k bit: các bit tràn bên trái quay về bên phải.
     @staticmethod
     def _rotl(x, k):
         return ((x &lt;&lt; k) | (x &gt;&gt; (32 - k))) &amp; 0xFFFFFFFF
     def next(self):
         s = self.s
+        # Số nhả ra lần này: lấy s[1], nhân 5, xoay 7 bit, nhân 9.
         out = (self._rotl((s[1] * 5) &amp; 0xFFFFFFFF, 7) * 9) &amp; 0xFFFFFFFF
+        # Khuấy 4 số trạng thái, đúng thứ tự này, để lần sau ra số mới.
         t = (s[1] &lt;&lt; 9) &amp; 0xFFFFFFFF
-        s[2] ^= s[0]; s[3] ^= s[1]; s[1] ^= s[2]; s[0] ^= s[3]; s[2] ^= t
+        s[2] ^= s[0]; s[3] ^= s[1]; s[1] ^= s[2]
+        s[0] ^= s[3]; s[2] ^= t
         s[3] = self._rotl(s[3], 11)
         return out
 
-def seed_C_from_tag(T: bytes) -&gt; list:
-    """Q7a. 128 bit đầu của thẻ, mỗi 4 byte đọc BIG-ENDIAN."""
-    return [struct.unpack('&gt;I', T[4 * k:4 * k + 4])[0] for k in range(4)]
+# Bước 5. 128 công tắc: chỉ lấy 16 byte đầu của T (128 bit).
+# Cứ 4 byte ghép thành một số 32 bit, byte lớn trước ('&gt;I'),
+# được 4 số làm trạng thái ban đầu của máy rút thăm. 16 byte sau bỏ đi.
+def seed_C_from_tag(T):
+    return [struct.unpack('&gt;I', T[4*k:4*k + 4])[0] for k in range(4)]
 
-def perm_C_from_tag(T: bytes, n: int = NBLK) -&gt; list:
+# Bước 6. Xáo 1 200 ô (NBLK = 1200) theo kiểu Fisher–Yates.
+# - p bắt đầu là [0, 1, 2, …, 1199]: ô nào đứng đúng chỗ ô đó.
+# - Đi từ ô cuối (i = 1199) về ô thứ hai (i = 1). Ở mỗi ô i, rút một
+#   vị trí j trong khoảng 0..i rồi đổi chỗ p[i] với p[j].
+# - Lấy j: nhân số rút được với (i + 1) rồi bỏ 32 bit thấp ("&gt;&gt; 32").
+#   Cách này (Lemire) giống lấy "tỉ lệ phần trăm" của phần hàng còn lại,
+#   nhanh hơn phép chia lấy dư và gần như không bị lệch.
+# - Kết quả p là cách xáo: ô thứ i của ảnh gửi đi lấy từ ô p[i] của ảnh gốc.
+def perm_C_from_tag(T, n=NBLK):
     g = Xoshiro128SS(seed_C_from_tag(T))
     p = list(range(n))
     for i in range(n - 1, 0, -1):
-        j = (g.next() * (i + 1)) &gt;&gt; 32          # Q7b: Lemire
+        j = (g.next() * (i + 1)) &gt;&gt; 32
         p[i], p[j] = p[j], p[i]
     return p
 
-def perm_C(counter_n: int, r: int = 0, key: bytes = K_MASTER_TEST, n: int = NBLK) -&gt; list:
-    return perm_C_from_tag(hmac_tag(counter_n, r, key), n)</code></pre>
-        <div class="cut extra">Áp cách xáo lên ảnh (dòng 137–148)</div>
-        <pre class="extra"><code class="language-python"># ------------------------- Áp hoán vị lên framebuffer ------------------------
-def permute_blocks(buf: bytes, perm: list, w: int = W, h: int = H, bs: int = BS) -&gt; bytearray:
-    """Không tại chỗ: out[khối i] = in[khối perm[i]]. Tốn thêm 76800 B RAM."""
+# Dùng: cách xáo của khung n là perm_C_from_tag(hmac_tag(n)).</code></pre></div>
+      <div class="codefoot"><button class="more" type="button" aria-expanded="false" aria-controls="body-py">Xem toàn bộ đoạn mã</button></div>
+    </div>
+    <div class="codepanel" role="tabpanel" id="pane-ap" aria-labelledby="tab-ap" hidden>
+      <div class="codehead"><div class="src"><b>Xáo và xếp lại ảnh.</b> Dùng bảng xáo để đổi chỗ các ô 8&nbsp;×&nbsp;8 trên ảnh; bên nhận dùng bảng ngược để xếp ảnh về như cũ.</div><button class="copy" type="button" data-copy="pane-ap">Sao chép đoạn mã</button></div>
+      <div class="codebody" id="body-ap"><pre><code class="language-python"># Các tên dùng sẵn ở đầu tệp: W = 320, H = 240 (kích thước ảnh),
+# BS = 8 (cạnh của một ô).
+
+# Bước 7. Áp cách xáo lên ảnh.
+# - Ảnh xám 320 × 240 (w × h) là một dãy byte, mỗi điểm ảnh một byte,
+#   đọc từ trái sang phải, từ trên xuống dưới.
+# - Ảnh được chia thành ô 8 × 8 (bs = 8): mỗi hàng có bw = 40 ô.
+# - Ô thứ i của ảnh mới lấy nội dung của ô thứ perm[i] của ảnh cũ.
+#   Mỗi ô chép 8 dòng, mỗi dòng 8 byte.
+# - Ảnh mới nằm ở vùng nhớ riêng (out), ảnh cũ giữ nguyên.
+def permute_blocks(buf, perm, w=W, h=H, bs=BS):
     bw = w // bs
     out = bytearray(len(buf))
     for i, src in enumerate(perm):
-        di, dj = divmod(i, bw); si, sj = divmod(src, bw)
+        # Hàng, cột của ô đích i và của ô nguồn perm[i].
+        di, dj = divmod(i, bw)
+        si, sj = divmod(src, bw)
         for row in range(bs):
+            # Vị trí byte đầu dòng thứ row của mỗi ô.
             d = (di * bs + row) * w + dj * bs
             s = (si * bs + row) * w + sj * bs
             out[d:d + bs] = buf[s:s + bs]
-    return out</code></pre>
-        <div class="cut extra">Cách xáo ngược, dùng ở bên nhận (dòng 176–179)</div>
-        <pre class="extra"><code class="language-python">def inverse_perm(perm: list) -&gt; list:
-    inv = [0] * len(perm)
-    for i, v in enumerate(perm): inv[v] = i
-    return inv</code></pre>
-        <div class="cut extra">Vân tay đối chiếu máy tính và ESP32 (dòng 195–204)</div>
-        <pre class="extra"><code class="language-python"># --------------------------------- Vân tay -----------------------------------
-def fnv1a64(b: bytes) -&gt; int:
-    h = 0xcbf29ce484222325
-    for c in b:
-        h = ((h ^ c) * 0x100000001b3) &amp; 0xFFFFFFFFFFFFFFFF
-    return h
+    return out
 
-def perm_fnv(p: list) -&gt; int:
-    """QUY ƯỚC VÂN TAY: mã hóa perm thành uint16 LITTLE-ENDIAN rồi FNV-1a 64 bit."""
-    return fnv1a64(array.array('H', p).tobytes())</code></pre>
-      </div>
-      <div class="codefoot"><button class="more" type="button" aria-expanded="false" aria-controls="body-py">Xem toàn bộ đoạn trích</button></div>
+# Bên nhận: lập bảng ngược của cách xáo.
+# Nếu ô gốc v đã được đặt vào chỗ i (perm[i] = v),
+# thì bảng ngược ghi inv[v] = i, tức "ô v phải lấy từ chỗ i".
+def inverse_perm(perm):
+    inv = [0] * len(perm)
+    for i, v in enumerate(perm):
+        inv[v] = i
+    return inv
+
+# Xếp ảnh về như cũ: áp bảng ngược lên ảnh đã xáo.
+#   anh_khoi_phuc = permute_blocks(anh_ma, inverse_perm(perm))</code></pre></div>
+      <div class="codefoot"><button class="more" type="button" aria-expanded="false" aria-controls="body-ap">Xem toàn bộ đoạn mã</button></div>
     </div>
     <div class="codepanel" role="tabpanel" id="pane-c" aria-labelledby="tab-c" hidden>
-      <div class="codehead"><div class="src"><b>Firmware ESP32-CAM</b> (tn17.ino; vùng CORE giữ nguyên văn từ TN16). Bản C là bản dịch trực tiếp của cpe_core.py và tự kiểm vân tay mỗi lần khởi động. Tệp đầy đủ: <a href="ma_do_an/tn17.ino" style="color:var(--code-num)">ma_do_an/tn17.ino</a>.</div><button class="copy" type="button" data-copy="pane-c" data-cmt="//">Sao chép đoạn trích</button></div>
-      <div class="codebody" id="body-c">
-        <div class="cut extra">Khóa thử nạp vào thiết bị (dòng 74–77)</div>
-        <pre class="extra"><code class="language-c">/* K_master THÍ NGHIỆM — 00 01 02 ... 1f. Hệ thật phải nạp khóa riêng. */
-static const uint8_t K_MASTER[32] = {
-  0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0a,0x0b,0x0c,0x0d,0x0e,0x0f,
-  0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19,0x1a,0x1b,0x1c,0x1d,0x1e,0x1f };</code></pre>
-        <div class="cut">Vùng CORE, giữ nguyên văn từ TN16 (dòng 126–168)</div>
-        <pre><code class="language-c">/* ---- xoshiro128** (Q7) — CHỈ số nguyên 32 bit, không lệch nền tảng --- */
-typedef struct { uint32_t s[4]; } xoshiro_t;
-static inline uint32_t rotl32(uint32_t x, int k) { return (x &lt;&lt; k) | (x &gt;&gt; (32 - k)); }
-static uint32_t xoshiro_next(xoshiro_t *g) {
-  uint32_t *s = g-&gt;s;
-  uint32_t out = rotl32(s[1] * 5u, 7) * 9u;
-  uint32_t t = s[1] &lt;&lt; 9;
-  s[2] ^= s[0]; s[3] ^= s[1]; s[1] ^= s[2]; s[0] ^= s[3]; s[2] ^= t;
-  s[3] = rotl32(s[3], 11);
-  return out;
-}
-/* Q7a: 128 bit đầu của thẻ HMAC, mỗi 4 byte đọc BIG-ENDIAN */
-static void xoshiro_seed_from_tag(xoshiro_t *g, const uint8_t *T) {
-  for (int k = 0; k &lt; 4; k++)
-    g-&gt;s[k] = ((uint32_t)T[4*k] &lt;&lt; 24) | ((uint32_t)T[4*k+1] &lt;&lt; 16) |
-              ((uint32_t)T[4*k+2] &lt;&lt; 8) | (uint32_t)T[4*k+3];
-}
-/* Q7b: Fisher-Yates giảm dần + Lemire bounded (KHÔNG chia dư) */
-static void perm_C_from_tag(const uint8_t *T, uint16_t *p, int n) {
-  xoshiro_t g; xoshiro_seed_from_tag(&amp;g, T);
-  for (int i = 0; i &lt; n; i++) p[i] = (uint16_t)i;
-  for (int i = n - 1; i &gt; 0; i--) {
-    uint32_t j = (uint32_t)(((uint64_t)xoshiro_next(&amp;g) * (uint64_t)(i + 1)) &gt;&gt; 32);
-    uint16_t t = p[i]; p[i] = p[j]; p[j] = t;
-  }
-}
+      <div class="codehead"><div class="src"><b>Bản C trên ESP32-CAM.</b> Cùng các bước như bản Python, viết bằng C để chạy trên thiết bị; HMAC-SHA256 dùng thư viện mbedtls có sẵn.</div><button class="copy" type="button" data-copy="pane-c">Sao chép đoạn mã</button></div>
+      <div class="codebody" id="body-c"><pre><code class="language-c">/* Bản C chạy trên ESP32-CAM: làm đúng các bước như bản Python.
+ * Khai báo ở phần đầu chương trình (không trích ở đây):
+ *   K_MASTER  khóa bí mật 32 byte
+ *   st[4]     4 số 32 bit, trạng thái của máy rút thăm
+ *   perm[]    bảng xáo NBLK = 1 200 phần tử
+ *   rotl32()  xoay vòng một số 32 bit sang trái
+ *   NBX = 40 ô mỗi hàng, BS = 8 điểm ảnh mỗi cạnh ô, W = 320 */
 
-/* ---- Áp hoán vị khối: out[khối i] = in[khối perm[i]] ----------------
- * Cách duyệt THEO KHỐI (TN15: nhanh hơn theo hàng 0,8..4,1 %).        */
-static void permute_blocks(const uint8_t *in, uint8_t *out, const uint16_t *perm) {
-  const int bw = W_IMG / BS;
-  for (int i = 0; i &lt; NBLK; i++) {
-    int src = perm[i];
-    int di = i / bw, dj = i - di * bw;
-    int si = src / bw, sj = src - si * bw;
-    const uint8_t *sp = in  + (si * BS) * W_IMG + sj * BS;
-    uint8_t       *dp = out + (di * BS) * W_IMG + dj * BS;
-    for (int row = 0; row &lt; BS; row++) {
-      for (int c = 0; c &lt; BS; c++) dp[c] = sp[c];
-      sp += W_IMG; dp += W_IMG;
-    }
-  }
-}</code></pre>
-        <div class="cut extra">Vân tay (dòng 181–195)</div>
-        <pre class="extra"><code class="language-c">/* ---- FNV-1a 64 bit — chỉ dùng làm VÂN TAY đối chiếu PC &lt;-&gt; ESP32 ---- */
-static uint64_t fnv1a64(const uint8_t *b, uint32_t n) {
-  uint64_t h = 0xcbf29ce484222325ULL;
-  for (uint32_t i = 0; i &lt; n; i++) { h ^= b[i]; h *= 0x100000001b3ULL; }
-  return h;
-}
-static uint64_t perm_fnv(const uint16_t *p, int n) {
-  /* QUY ƯỚC: uint16 LITTLE-ENDIAN rồi FNV-1a */
-  uint64_t h = 0xcbf29ce484222325ULL;
-  for (int i = 0; i &lt; n; i++) {
-    h ^= (uint8_t)(p[i] &amp; 0xFF);   h *= 0x100000001b3ULL;
-    h ^= (uint8_t)(p[i] &gt;&gt; 8);     h *= 0x100000001b3ULL;
-  }
-  return h;
-}</code></pre>
-        <div class="cut extra">Máy trộn HMAC-SHA256 bằng mbedtls của ESP-IDF (dòng 243–257)</div>
-        <pre class="extra"><code class="language-c">/* ------------------------ 6. HMAC-SHA256 (Q1+Q2) --------------------- */
-static void hmac_tag(uint32_t counter_n, uint32_t r, uint8_t out32[32]) {
+/* Bước 2–4. Máy trộn: ghép số khung (counter) và r thành 8 byte,
+ * byte lớn đứng trước, rồi tính HMAC-SHA256 với khóa K_MASTER
+ * bằng thư viện mbedtls có sẵn trên ESP32. Kết quả 32 byte ghi vào out. */
+static void tag_hmac(uint32_t counter, uint32_t r, uint8_t out[32]) {
   uint8_t msg[8];
-  msg[0]=(uint8_t)(counter_n&gt;&gt;24); msg[1]=(uint8_t)(counter_n&gt;&gt;16);
-  msg[2]=(uint8_t)(counter_n&gt;&gt;8);  msg[3]=(uint8_t)(counter_n);
-  msg[4]=(uint8_t)(r&gt;&gt;24); msg[5]=(uint8_t)(r&gt;&gt;16);
-  msg[6]=(uint8_t)(r&gt;&gt;8);  msg[7]=(uint8_t)(r);
+  msg[0]=counter&gt;&gt;24; msg[1]=counter&gt;&gt;16;
+  msg[2]=counter&gt;&gt;8;  msg[3]=counter;
+  msg[4]=r&gt;&gt;24;       msg[5]=r&gt;&gt;16;
+  msg[6]=r&gt;&gt;8;        msg[7]=r;
   mbedtls_md_context_t ctx; mbedtls_md_init(&amp;ctx);
-  const mbedtls_md_info_t *info = mbedtls_md_info_from_type(MBEDTLS_MD_SHA256);
-  mbedtls_md_setup(&amp;ctx, info, 1);
+  mbedtls_md_setup(&amp;ctx,
+      mbedtls_md_info_from_type(MBEDTLS_MD_SHA256), 1);
   mbedtls_md_hmac_starts(&amp;ctx, K_MASTER, 32);
   mbedtls_md_hmac_update(&amp;ctx, msg, 8);
-  mbedtls_md_hmac_finish(&amp;ctx, out32);
+  mbedtls_md_hmac_finish(&amp;ctx, out);
   mbedtls_md_free(&amp;ctx);
-}</code></pre>
-        <div class="cut extra">Trích hàm do_one_frame: mỗi khung gọi máy trộn rồi tạo cách xáo (dòng 557–571)</div>
-        <pre class="extra"><code class="language-c">  uint32_t cn = g_counter;
-  uint8_t  rr = 0;                      /* PP-C: KHÔNG có ShortCycleError -&gt; r luôn 0 */
-  uint8_t  T[32];
+}
 
-  ta = micros(); hmac_tag(cn, rr, T); t_hmac = micros() - ta;
+/* Bước 6 (phần rút thăm). Máy rút thăm xoshiro128**: trả ra một số
+ * 32 bit rồi khuấy 4 số trạng thái st[0..3]. Thứ tự phép tính giống
+ * hệt bản Python, nên hai bên ra cùng một dãy số. */
+static uint32_t xnext(void) {
+  uint32_t res = rotl32(st[1] * 5u, 7) * 9u;
+  uint32_t t   = st[1] &lt;&lt; 9;
+  st[2] ^= st[0]; st[3] ^= st[1]; st[1] ^= st[2]; st[0] ^= st[3];
+  st[2] ^= t;     st[3] = rotl32(st[3], 11);
+  return res;
+}
 
-  ta = micros();
-#if PERM_MODE == 2
-  perm_C_from_tag(T, g_perm, NBLK);
-  permute_blocks(fb-&gt;buf, g_permed, g_perm);
-  const uint8_t *src = g_permed;
-#else
-  const uint8_t *src = fb-&gt;buf;         /* PERM_MODE 0: đối chứng không mã hóa */
-#endif
-  t_perm = micros() - ta;</code></pre>
-        <div class="cut extra">Trích hàm in_van_tay: thiết bị tự kiểm vân tay khi khởi động (dòng 462–482)</div>
-        <pre class="extra"><code class="language-c">static void in_van_tay(uint16_t *perm_buf) {
-  uint8_t T[32]; hmac_tag(0, 0, T);
-  Serial.print("# VANTAY,hmac_T0=");
-  for (int i = 0; i &lt; 8; i++) Serial.printf("%02x", T[i]);
-  Serial.println("  (PC: 9f0cd9b94097fe49)");
-  perm_C_from_tag(T, perm_buf, NBLK);
-  Serial.print("# VANTAY,perm0_dau8=");
-  for (int i = 0; i &lt; 8; i++) Serial.printf("%d ", perm_buf[i]);
-  Serial.println("  (PC: 109 1171 266 101 493 889 1106 419)");
-  Serial.printf("# VANTAY,fnv_n0=0x%016llX   (PC: 0xE4D8CAD02C139271)\n",
-                perm_fnv(perm_buf, NBLK));
-  Serial.printf("# VANTAY,crc16_123456789=0x%04X   (PC: 0x29B1)\n",
-                crc16_ccitt_false((const uint8_t*)"123456789", 9));
-  uint8_t hdr[12];
-  build_header(hdr, 0x06, 0x03, 0x12345678, 0x1290, 0xA61C);
-  Serial.print("# VANTAY,header_mau=");
-  for (int i = 0; i &lt; 12; i++) Serial.printf("%02x", hdr[i]);
-  Serial.println("  (PC: 43010603123456781290a61c)");
-  hmac_tag(12345, 0, T); perm_C_from_tag(T, perm_buf, NBLK);
-  Serial.printf("# VANTAY,fnv_n12345=0x%016llX   (PC: 0x77CDD08E5E99A22D)\n",
-                perm_fnv(perm_buf, NBLK));</code></pre>
-      </div>
-      <div class="codefoot"><button class="more" type="button" aria-expanded="false" aria-controls="body-c">Xem toàn bộ đoạn trích</button></div>
-    </div>
-    <div class="codepanel" role="tabpanel" id="pane-rx" aria-labelledby="tab-rx" hidden>
-      <div class="codehead"><div class="src"><b>tn16_receiver.py</b>, bên nhận chính thức: sinh lại cách xáo từ số khung rồi trả các ô về chỗ. Tệp đầy đủ: <a href="ma_do_an/tn16_receiver.py" style="color:var(--code-num)">ma_do_an/tn16_receiver.py</a>.</div><button class="copy" type="button" data-copy="pane-rx" data-cmt="#">Sao chép đoạn trích</button></div>
-      <div class="codebody" id="body-rx">
-        <div class="cut">Hàm decode_frame (dòng 41–52)</div>
-        <pre><code class="language-python">def decode_frame(info):
-    """Giải nén JPEG rồi hoán vị NGHỊCH -&gt; ảnh khôi phục 320x240."""
-    arr = np.array(Image.open(io.BytesIO(info["jpg"])).convert("L"), dtype=np.uint8)
-    if arr.shape != (C.H, C.W):
-        raise ValueError("kich thuoc %s khong phai 240x320" % (arr.shape,))
-    if info["perm_mode"] == 0:
-        return arr, arr
-    T = C.hmac_tag(info["counter"], info["r"])
-    p = C.perm_C_from_tag(T) if info["perm_mode"] == 2 else C.perm_A_from_u23(C.u23_from_tag(T))
-    inv = C.inverse_perm(p)
-    rec = np.frombuffer(bytes(C.permute_blocks(arr.tobytes(), inv)), dtype=np.uint8)
-    return arr, rec.reshape(C.H, C.W)</code></pre>
-      </div>
-      <div class="codefoot"><button class="more" type="button" aria-expanded="false" aria-controls="body-rx">Xem toàn bộ đoạn trích</button></div>
-    </div>
-    <div class="codepanel" role="tabpanel" id="pane-js" aria-labelledby="tab-js" hidden>
-      <div class="codehead"><div class="src"><b>Bản JavaScript</b> dùng riêng cho trang này để chạy trong trình duyệt, không thuộc mã nguồn đồ án. Đoạn dưới được lấy trực tiếp từ các hàm đang chạy trên trang; nó khớp đủ 4 vân tay ở mục Kiểm chứng.</div><button class="copy" type="button" data-copy="pane-js" data-cmt="//">Sao chép đoạn trích</button></div>
-      <div class="codebody" id="body-js">
-        <pre><code class="language-javascript" id="jsCode"></code></pre>
-      </div>
-      <div class="codefoot"><button class="more" type="button" aria-expanded="false" aria-controls="body-js">Xem toàn bộ đoạn trích</button></div>
+/* Bước 5–6. Sinh cách xáo từ thẻ T:
+ * - nạp 16 byte đầu của T vào st[]: mỗi 4 byte thành một số;
+ * - xếp perm = 0, 1, …, 1199;
+ * - xáo Fisher–Yates từ ô cuối về ô thứ hai; j lấy bằng phép nhân 64 bit
+ *   rồi dịch phải 32 bit, không dùng phép chia. */
+static void perm_C(const uint8_t *T) {
+  for (int k = 0; k &lt; 4; k++)                      /* byte lớn đứng trước */
+    st[k] = ((uint32_t)T[4*k] &lt;&lt; 24) | ((uint32_t)T[4*k+1] &lt;&lt; 16) |
+            ((uint32_t)T[4*k+2] &lt;&lt; 8) | (uint32_t)T[4*k+3];
+  for (int i = 0; i &lt; NBLK; i++) perm[i] = (uint16_t)i;
+  for (int i = NBLK - 1; i &gt; 0; i--) {             /* từ ô cuối về đầu */
+    uint32_t j =
+      (uint32_t)(((uint64_t)xnext() * (uint64_t)(i + 1)) &gt;&gt; 32);
+    uint16_t tmp = perm[i]; perm[i] = perm[j]; perm[j] = tmp;
+  }
+}
+
+/* Bước 7. Áp cách xáo lên khung ảnh: ô i của ảnh gửi đi (dst) lấy từ
+ * ô perm[i] của ảnh gốc (src). (dr, dc) và (sr, sc) là dòng, cột của góc
+ * trên trái hai ô; mỗi ô chép 8 dòng, mỗi dòng 8 byte bằng memcpy. */
+static void hv_khoi(const uint8_t *src, uint8_t *dst) {
+  for (int i = 0; i &lt; NBLK; i++) {
+    const int dr = (i / NBX) * BS, dc = (i % NBX) * BS;
+    const int s  = perm[i];
+    const int sr = (s / NBX) * BS, sc = (s % NBX) * BS;
+    for (int y = 0; y &lt; BS; y++)
+      memcpy(dst + (dr + y) * W + dc, src + (sr + y) * W + sc, BS);
+  }
+}</code></pre></div>
+      <div class="codefoot"><button class="more" type="button" aria-expanded="false" aria-controls="body-c">Xem toàn bộ đoạn mã</button></div>
     </div>
     <p class="note" id="copyMsg" aria-live="polite" style="margin-top:.6rem"></p>
   </div>
@@ -838,16 +615,15 @@ static void hmac_tag(uint32_t counter_n, uint32_t r, uint8_t out32[32]) {
 <footer>
   <div class="wrap">
     <p>Đồ án tốt nghiệp “Nghiên cứu phương pháp mã hóa cảm nhận và ứng dụng trong IoT” · Thái Hữu Thân, AT19A, AT190149 · GVHD: ThS. Hoàng Thu Phương.</p>
-    <p>Trang minh họa phục vụ báo cáo. Số bảng (3.3, 3.5, 4.12) theo bản thảo đồ án; hãy đối chiếu lại nếu bản cuối đánh số khác.</p>
+    <p>Trang minh họa cách khóa và số khung tạo ra cách xáo. Mã nguồn giữ nguyên dòng lệnh của đồ án; chú thích được viết lại cho dễ hiểu.</p>
   </div>
 </footer>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-<script src="data/manifest.js"></script>
 <script>
 "use strict";
 
-/* ===== Phần lõi: bản JavaScript của PP-C (hiển thị ở thẻ mã nguồn) ===== */
+/* ===== Phần lõi: bản JavaScript của cách xáo, chạy ngay trong trình duyệt ===== */
 const SHA256_K = new Uint32Array([
   0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
   0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
@@ -945,7 +721,26 @@ const hx = b => b.toString(16).padStart(2, "0");
 const group = x => String(x).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 const pct = v => (v / 4294967296 * 100).toFixed(2).replace(".", ",");
 
-/* ---- ảnh gốc tổng hợp 320 x 240 xám ---- */
+/* ---- vân tay: kiểm ngầm rằng bản JavaScript ra đúng cách xáo như mã của đồ án ---- */
+(function vanTay() {
+  const T0 = hmacTag(KEY_TEST, 0, 0), p0 = permFromState(seedFromTag(T0)).p, p12345 = permFromState(seedFromTag(hmacTag(KEY_TEST, 12345, 0))).p;
+  const rows = [
+    ["9f 0c d9 b9 40 97 fe 49", Array.from(T0.slice(0, 8), hx).join(" ")],
+    ["109 1171 266 101 493 889 1106 419", p0.slice(0, 8).join(" ")],
+    ["0xE4D8CAD02C139271", permFnv(p0)],
+    ["0x77CDD08E5E99A22D", permFnv(p12345)],
+  ];
+  const ok = rows.filter(([ky, tinh]) => ky === tinh).length, dat = ok === rows.length;
+  const kq = (dat ? "Khớp " : "Chỉ khớp ") + ok + "/" + rows.length;
+  document.documentElement.dataset.vanTay = kq;
+  if (dat) { console.info("Vân tay của bản JavaScript: " + kq); return; }
+  console.error("Vân tay của bản JavaScript: " + kq, rows);
+  const b = $("vanTayLoi");
+  b.textContent = "Bản JavaScript trên trang đang tính lệch (" + kq.toLowerCase() + " giá trị kiểm), cách xáo hiển thị có thể sai.";
+  b.hidden = false;
+})();
+
+/* ---- ảnh gốc 320 x 240 xám: vẽ sẵn một cảnh, rồi thay bằng ảnh anh/nt01_khu_vuon.png khi tải xong ---- */
 const SRC = document.createElement("canvas");
 SRC.width = 320; SRC.height = 240;
 (function drawScene() {
@@ -967,8 +762,6 @@ SRC.width = 320; SRC.height = 240;
   c.fillStyle = "#383d42"; c.fillRect(236, 140, 12, 48);
   c.fillStyle = "#4b535a"; c.beginPath(); c.arc(242, 124, 28, 0, 7); c.fill();
   c.fillStyle = "#5c646b"; c.beginPath(); c.arc(226, 136, 16, 0, 7); c.fill();
-  c.fillStyle = "#1b2025"; c.font = "800 23px 'Be Vietnam Pro', system-ui, sans-serif"; c.textAlign = "center";
-  c.fillText("ESP32-CAM", 238, 226);
 })();
 
 /* ---- khung hiển thị 1 200 ô, có hoạt cảnh di chuyển ---- */
@@ -1006,10 +799,17 @@ class TileView {
 const IDENTITY = Array.from({ length: 1200 }, (_, i) => i);
 const heroView = new TileView($("heroCanvas"));
 const mixView = new TileView($("mixCanvas"));
-new TileView($("origCanvas"));
+const origView = new TileView($("origCanvas"));
+
+const ANH_MINH_HOA = new Image();
+ANH_MINH_HOA.onload = () => {
+  SRC.getContext("2d").drawImage(ANH_MINH_HOA, 0, 0, 320, 240);
+  [heroView, mixView, origView].forEach(v => v.draw());
+};
+ANH_MINH_HOA.src = "anh/nt01_khu_vuon.png";
 
 /* ---- trạng thái chung của máy ---- */
-const S = { key: KEY_TEST.slice(), n: 0, state: [0, 0, 0, 0], manual: false, perm: IDENTITY, prev: null, prevState: null, act: "Khóa thử của đồ án, khung số 0", heroUndone: false, first: true };
+const S = { key: KEY_TEST.slice(), n: 0, state: [0, 0, 0, 0], manual: false, perm: IDENTITY, prev: null, prevState: null, act: "Khóa thử, khung số 0", heroUndone: false, first: true };
 
 /* ---- ngân hàng 128 công tắc ---- */
 const swEls = [];
@@ -1043,7 +843,7 @@ function render() {
   $("nVal").textContent = group(S.n);
   const m = [S.n >>> 24, (S.n >>> 16) & 255, (S.n >>> 8) & 255, S.n & 255, 0, 0, 0, 0];
   $("msgHex").textContent = m.map(hx).join(" ");
-  $("manualNote").textContent = S.manual ? "Đang gạt tay: 128 công tắc không còn lấy từ máy trộn ở bước 4. Khi chỉ 1 công tắc khác đi, vài lượt rút đầu gần như không đổi nên vài ô cuối hàng thường giữ nguyên chỗ, trung bình khoảng 4 ô thay vì 1; máy trộn tránh được điều này vì giữa hai khung liền nhau nó đổi khoảng 64 công tắc chứ không phải 1. Bấm một nút ở bước 2 hoặc 3 để quay lại." : "";
+  $("manualNote").textContent = S.manual ? "Đang gạt tay: 128 công tắc không còn lấy từ máy trộn ở bước 4. Khi chỉ 1 công tắc khác đi, vài lượt rút đầu gần như không đổi nên vài ô cuối hàng thường giữ nguyên chỗ; máy trộn tránh được điều này vì giữa hai khung liền nhau nó đổi khoảng một nửa số công tắc. Bấm một nút ở bước 2 hoặc 3 để quay lại." : "";
   if (S.prevState) {
     let d = 0; for (let k = 0; k < 4; k++) { let x = (S.prevState[k] ^ S.state[k]) >>> 0; while (x) { d += x & 1; x >>>= 1; } }
     $("swDiff").textContent = d + " / 128 công tắc";
@@ -1068,20 +868,20 @@ function render() {
   $("sameCount").textContent = same; $("lastAct").textContent = S.act;
   mixView.show(r.p, !S.first);
   if (!S.first) { heroView.show(r.p, true); setHero(false); }
-  $("heroCap").textContent = (S.manual ? "Công tắc gạt tay" : "Khung số " + group(S.n) + (isTestKey() ? ", khóa thử của đồ án" : ", khóa khác"));
+  $("heroCap").textContent = (S.manual ? "Công tắc gạt tay" : "Khung số " + group(S.n) + (isTestKey() ? ", khóa thử" : ", khóa khác"));
 }
 
 function isTestKey() { for (let i = 0; i < 32; i++) if (S.key[i] !== i) return false; return true; }
 function setHero(undone) { S.heroUndone = undone; $("heroUndo").textContent = undone ? "Xem lại ảnh đã xáo" : "Bên nhận xếp lại"; }
 
-$("kTest").addEventListener("click", () => { S.key = KEY_TEST.slice(); S.act = "Dùng lại khóa thử của đồ án"; compute(); });
+$("kTest").addEventListener("click", () => { S.key = KEY_TEST.slice(); S.act = "Dùng lại khóa thử"; compute(); });
 $("kFlip").addEventListener("click", () => {
   const bit = Math.floor(Math.random() * 256); S.key[bit >> 3] ^= 1 << (7 - (bit & 7));
-  S.act = "Đổi đúng 1 bit (bit số " + (bit + 1) + " trên 256) của khóa chủ"; compute();
+  S.act = "Đổi đúng 1 bit (bit số " + (bit + 1) + " trên 256) của khóa"; compute();
 });
 $("kRand").addEventListener("click", () => {
   if (window.crypto && crypto.getRandomValues) crypto.getRandomValues(S.key); else for (let i = 0; i < 32; i++) S.key[i] = Math.floor(Math.random() * 256);
-  S.act = "Thay bằng một khóa chủ ngẫu nhiên"; compute();
+  S.act = "Thay bằng một khóa ngẫu nhiên"; compute();
 });
 $("nMinus").addEventListener("click", () => { if (S.n > 0) { S.n--; S.act = "Lùi về khung số " + group(S.n); compute(); } });
 $("nPlus").addEventListener("click", () => { S.n++; S.act = "Chuyển sang khung số " + group(S.n); compute(); });
@@ -1124,12 +924,11 @@ toyRender();
 /* ---- thanh trượt số công tắc ---- */
 function countRender() {
   const k = +$("kSlider").value, v = (1n << BigInt(k)).toString();
-  $("kOut").textContent = k; $("countOut").textContent = "2^" + k + " = " + group(v).replace(/\u00A0/g, " ");
+  $("kOut").textContent = k; $("countOut").textContent = "2^" + k + " = " + group(v).replace(/ /g, " ");
   $("digitsOut").textContent = "Số có " + v.length + " chữ số.";
   let msg = "Thêm 1 công tắc thì số thế gấp đôi. Ví dụ tí hon ở bước 1 có 2 công tắc: 4 thế, 4 cách xáo.";
   const c = $("kCallout"); c.className = "callout";
-  if (k === 23) { msg = "Mức của PP-A trên giấy: 23 bit, 8 388 608 khả năng. Nhưng làm tròn số thực gộp chúng lại, thực tế chỉ còn 190 277 cách xáo (Bảng 4.12)."; c.className = "callout secret"; }
-  else if (k === 128) { msg = "Mức của PP-C: 128 công tắc. Máy chỉ dùng số nguyên và không gộp thế nào, nên mỗi thế cho một cách xáo riêng."; c.className = "callout secret"; }
+  if (k === 128) { msg = "Đây là máy trên trang: 128 công tắc. Máy chỉ dùng số nguyên nên các thế không bị gộp lại khi tính."; c.className = "callout secret"; }
   else if (k === 2) msg = "Đúng ví dụ tí hon ở bước 1: 2 công tắc, 4 thế, 4 cách xáo.";
   else if (k === 10) msg = "10 công tắc đã cho hơn một nghìn thế.";
   c.textContent = msg;
@@ -1137,31 +936,11 @@ function countRender() {
 $("kSlider").addEventListener("input", countRender);
 countRender();
 
-/* ---- vân tay Bảng 3.5 ---- */
-(function fingerprints() {
-  const T0 = hmacTag(KEY_TEST, 0, 0), p0 = permFromState(seedFromTag(T0)).p, p12345 = permFromState(seedFromTag(hmacTag(KEY_TEST, 12345, 0))).p;
-  const rows = [
-    ["T[0…7] với n = 0, r = 0", "9f 0c d9 b9 40 97 fe 49", Array.from(T0.slice(0, 8), hx).join(" ")],
-    ["π[0…7] với n = 0", "109 1171 266 101 493 889 1106 419", p0.slice(0, 8).join(" ")],
-    ["FNV-1a 64 của π với n = 0", "0xE4D8CAD02C139271", permFnv(p0)],
-    ["FNV-1a 64 của π với n = 12345", "0x77CDD08E5E99A22D", permFnv(p12345)],
-  ];
-  let ok = 0;
-  $("fpBody").innerHTML = rows.map(([name, exp, got]) => {
-    const m = exp === got; if (m) ok++;
-    return '<tr><td data-label="Đại lượng">' + name + '</td><td class="exp" data-label="Kỳ vọng">' + exp + '</td><td class="got" data-label="Trang tính được">' + got + '</td><td data-label="Kết quả"><span class="badge ' + (m ? "ok" : "bad") + '">' + (m ? "Khớp" : "Lệch") + "</span></td></tr>";
-  }).join("");
-  const sum = $("fpSum"), dat = ok === rows.length;
-  sum.classList.toggle("bad", !dat);
-  sum.textContent = dat ? "Khớp " + ok + "/" + rows.length + " vân tay Bảng 3.5: trang này tạo ra đúng cách xáo như cpe_core.py và firmware ESP32." : "Chỉ khớp " + ok + "/" + rows.length + " vân tay Bảng 3.5. Bản JavaScript đang lệch đặc tả.";
-})();
-
 /* ---- mã nguồn: thẻ, tô màu, sao chép, xem toàn bộ ---- */
-$("jsCode").textContent = "// Bản JavaScript của PP-C dùng trên trang này (không thuộc mã nguồn đồ án)\n\nconst SHA256_K = new Uint32Array([/* 64 hằng số chuẩn của SHA-256 */]);\n\n" + CORE_FUNCS.map(f => f.toString()).join("\n\n");
 function nutXemToanBo(pane) {
   const body = pane.querySelector(".codebody"), foot = pane.querySelector(".codefoot");
   if (pane.hidden) return;
-  foot.hidden = !pane.classList.contains("full") && !pane.querySelector(".extra") && body.scrollHeight <= body.clientHeight + 2;
+  foot.hidden = !pane.classList.contains("full") && body.scrollHeight <= body.clientHeight + 2;
 }
 document.querySelectorAll(".codepanel").forEach(pane => {
   const btn = pane.querySelector(".codefoot .more");
@@ -1169,7 +948,7 @@ document.querySelectorAll(".codepanel").forEach(pane => {
     const full = !pane.classList.contains("full");
     pane.classList.toggle("full", full);
     btn.setAttribute("aria-expanded", full ? "true" : "false");
-    btn.textContent = full ? "Thu gọn đoạn trích" : "Xem toàn bộ đoạn trích";
+    btn.textContent = full ? "Thu gọn đoạn mã" : "Xem toàn bộ đoạn mã";
     if (!full) pane.scrollIntoView({ block: "nearest" });
   });
 });
@@ -1188,10 +967,8 @@ tabs.forEach((t, i) => {
 try { if (window.hljs) document.querySelectorAll(".codepanel pre code").forEach(el => hljs.highlightElement(el)); } catch (e) {}
 nutXemToanBo($("pane-py"));
 document.querySelectorAll(".copy").forEach(btn => btn.addEventListener("click", async () => {
-  const pane = $(btn.dataset.copy);
-  const parts = Array.from(pane.querySelectorAll(".cut, pre code")).map(el => el.classList.contains("cut") ? "\n" + (btn.dataset.cmt || "#") + " ⋯ " + el.textContent + " ⋯\n" : el.textContent);
-  const text = parts.join("\n");
-  const nhan = "Sao chép đoạn trích";
+  const text = $(btn.dataset.copy).querySelector("pre code").textContent;
+  const nhan = "Sao chép đoạn mã";
   try { await navigator.clipboard.writeText(text); btn.textContent = "Đã sao chép"; $("copyMsg").textContent = ""; }
   catch (e) {
     const ta = document.createElement("textarea"); ta.value = text; ta.style.position = "absolute"; ta.style.left = "-9999px"; document.body.appendChild(ta); ta.select();
@@ -1202,95 +979,6 @@ document.querySelectorAll(".copy").forEach(btn => btn.addEventListener("click", 
   }
   setTimeout(() => { btn.textContent = nhan; }, 1800);
 }));
-
-/* ---- ảnh chạy qua hệ thống (đọc data/manifest.js do tools/dung_trang.py sinh ra) ---- */
-(function heThong() {
-  const D = window.CPE_DATA;
-  const vn = (x, d = 2) => Number(x).toFixed(d).replace(".", ",");
-  const sign = x => (x > 0 ? "+" : x < 0 ? "−" : "") + vn(Math.abs(x));
-  const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-  if (!D || !D.anh || D.anh.length === 0) { $("htEmpty").hidden = false; return; }
-  $("htBody").hidden = false;
-  const T = D.tong_hop, vtOk = D.van_tay.filter(v => v.khop).length, Q = "Q = " + D.tham_so.q;
-  const card = (k, v, s) => '<div class="metric"><div class="k">' + k + '</div><div class="v">' + v + '</div><div class="s">' + s + "</div></div>";
-  let m = card("Ảnh đã xử lý", T.so_anh, T.so_ban_tin_that ? "và " + T.so_ban_tin_that + " bản tin thật từ ESP32-CAM" : "chạy đủ bên gửi và bên nhận");
-  if (T.so_anh) {
-    m += card("Khôi phục trùng từng byte", T.trung_tung_byte + " / " + T.so_anh, "so với JPEG không mã hóa cùng " + Q);
-    m += card("Phình kích thước (trung vị)", sign(T.delta_pt_trung_vi) + " %", "dải " + sign(T.delta_pt_min) + " % đến " + sign(T.delta_pt_max) + " %, đo trên máy tính");
-  }
-  m += card("Kiểm tra trước khi chạy", vtOk + "/" + D.van_tay.length + " vân tay", D.tu_kiem_ben_nhan.dat ? "tự kiểm bên nhận TN16 đạt" : "tự kiểm bên nhận KHÔNG đạt");
-  $("htMetrics").innerHTML = m;
-
-  const items = D.anh;
-  $("htThumbs").innerHTML = items.map((it, i) => {
-    const src = it.tep ? (it.tep.goc || it.tep.khoi_phuc || it.tep.ma) : "";
-    const nhan = it.loai === "esp32_that" ? "Bản tin thật" : "n = " + it.n;
-    return '<button type="button" class="thumb" data-i="' + i + '" aria-pressed="false" title="' + esc(it.tep_goc) + '">' + (src ? '<img src="' + esc(src) + '" alt="" loading="lazy">' : '<div class="flow3"><div class="none">Hỏng</div></div>') + "<span>" + esc(it.tep_goc) + '</span><span class="k">' + nhan + "</span></button>";
-  }).join("");
-
-  $("htTongHopNote").textContent = "(" + T.so_anh + " ảnh" + (T.so_ban_tin_that ? ", " + T.so_ban_tin_that + " bản tin thật" : "") + ")";
-  const td = (lb, v, cls) => '<td data-label="' + lb + '"' + (cls ? ' class="' + cls + '"' : "") + ">" + v + "</td>";
-  $("htTable").innerHTML = "<thead><tr><th>Ảnh</th><th>Khung n</th><th>JPEG thường (B)</th><th>JPEG sau xáo (B)</th><th>Phình</th><th>SSIM ảnh đã xáo</th><th>Trùng từng byte</th></tr></thead><tbody>" +
-    items.map((it, i) => it.loai === "mo_phong"
-      ? '<tr class="rowsel" data-i="' + i + '">' + td("Ảnh", esc(it.tep_goc)) + td("Khung n", it.n) + td("JPEG thường", group(it.jpeg_thuong_B)) + td("JPEG sau xáo", group(it.jpeg_ma_B)) + td("Phình", sign(it.delta_pt) + " %") + td("SSIM ảnh đã xáo", it.ssim_ma == null ? "—" : vn(it.ssim_ma, 4)) + td("Trùng từng byte", it.trung_tung_byte ? '<span class="okmark">Có</span>' : '<span class="badmark">Không</span>') + "</tr>"
-      : '<tr class="rowsel" data-i="' + i + '">' + td("Ảnh", esc(it.tep_goc) + " (bản tin thật)") + td("Khung n", it.n ?? "—") + td("JPEG thường", "—") + td("JPEG sau xáo", it.jpeg_ma_B ? group(it.jpeg_ma_B) : "—") + td("Phình", "—") + td("SSIM ảnh đã xáo", "—") + td("Trùng từng byte", it.crc_dung ? "không có ảnh gốc để so" : '<span class="badmark">CRC hỏng</span>') + "</tr>").join("") + "</tbody>";
-
-  const lg = ["Sinh lúc: " + D.sinh_luc, "Q = " + D.tham_so.q + ", khung đầu n0 = " + D.tham_so.n0 + ", r = " + D.tham_so.r, "Khóa: " + D.tham_so.khoa, "Bộ nén: " + D.tham_so.bo_nen, "Python " + D.tham_so.python + ", numpy " + D.tham_so.numpy, "", "Vân tay Bảng 3.5:"]
-    .concat(D.van_tay.map(v => "  " + (v.khop ? "KHỚP  " : "LỆCH  ") + v.ten + ": " + v.tinh_duoc)).concat(["", D.tu_kiem_ben_nhan.nhat_ky]);
-  $("htLog").textContent = lg.join("\n");
-
-  const seg = (b, l, cls) => '<span class="seg' + (cls ? " " + cls : "") + '"><span class="b">' + b + '</span><span class="l">' + l + "</span></span>";
-  const row = (k, v) => '<tr><th scope="row">' + k + "</th><td>" + v + "</td></tr>";
-  let moChiTiet = false;
-  function show(i) {
-    const it = items[i];
-    const cu = $("htChiTiet"); if (cu) moChiTiet = cu.open;
-    document.querySelectorAll(".thumb").forEach(b => b.setAttribute("aria-pressed", +b.dataset.i === i ? "true" : "false"));
-    document.querySelectorAll("#htTable .rowsel").forEach(r => r.classList.toggle("sel", +r.dataset.i === i));
-    let h = "<h3>" + esc(it.tep_goc) + (it.loai === "esp32_that" ? " — bản tin thật từ ESP32-CAM" : "") + "</h3>";
-    if (it.loai === "esp32_that" && !it.crc_dung) {
-      $("htDetail").innerHTML = h + '<p class="badmark">Bên nhận từ chối bản tin: ' + esc(it.loi) + ".</p><p>Bản tin dài " + group(it.ban_tin_B) + " B. Đúng như thiết kế: bản tin sai CRC bị bỏ, không được giải mã.</p>";
-      return;
-    }
-    const fig = (src, b, s) => src ? '<figure><img src="' + esc(src) + '" alt="' + esc(b) + '" width="320" height="240"><figcaption class="cap"><b>' + b + "</b>" + s + "</figcaption></figure>" : '<figure><div class="none">Không có ảnh gốc: bản tin thật chỉ có phía bên nhận</div><figcaption class="cap"><b>' + b + "</b>" + s + "</figcaption></figure>";
-    h += '<div class="flow3">' +
-      fig(it.tep.goc, "Ảnh gốc", it.loai === "mo_phong" ? "320 × 240 xám, chỉ thiết bị thấy" : "") +
-      '<div class="arrow" aria-hidden="true">→</div>' +
-      fig(it.tep.ma, "Bản tin trên đường truyền", group(it.jpeg_ma_B) + " B JPEG, ai cũng mở được") +
-      '<div class="arrow" aria-hidden="true">→</div>' +
-      fig(it.tep.khoi_phuc, "Bên nhận khôi phục", "dùng cùng khóa và số khung n = " + it.n) + "</div>";
-    const tde = it.tieu_de;
-    const goi = '<p style="margin:0 0 .25rem;font-size:.93rem">Bản tin gồm 12 byte tiêu đề rồi tới tệp JPEG. Chỉ số khung đi kèm; khóa và cách xáo không bao giờ được gửi.</p><div class="pkt">' +
-      seg(tde.magic, "MAGIC") + seg(tde.ver, "VER") + seg(tde.flags, "FLAGS") + seg(tde.r, "r") + seg(tde.counter, "số khung n", "cnt") + seg(tde.len, "LEN") + seg(tde.crc, "CRC-16") + seg(tde.jpeg_dau + " …", "JPEG", "jpg") + "</div>";
-    let chinh, phu;
-    if (it.loai === "mo_phong") {
-      chinh = row("Số khung n", it.n + ", gửi công khai trong tiêu đề") +
-        row("Kích thước JPEG", group(it.jpeg_thuong_B) + " B khi không mã hóa, " + group(it.jpeg_ma_B) + " B sau khi xáo: phình " + sign(it.delta_B).replace(",00", "") + " B (" + sign(it.delta_pt) + " %), tức " + vn(it.bit_moi_khoi) + " bit mỗi khối") +
-        row("Bản tin gửi đi", group(it.ban_tin_B) + " B = 12 B tiêu đề + " + group(it.jpeg_ma_B) + " B JPEG") +
-        row("Bên nhận kiểm CRC", '<span class="okmark">Đúng</span>') +
-        row("Khôi phục", it.trung_tung_byte ? '<span class="okmark">Trùng từng byte</span> với JPEG không mã hóa cùng ' + "Q = " + it.q : '<span class="badmark">Lệch ' + it.byte_lech_khi_khoi_phuc + " byte</span>");
-      phu = row("Tệp gốc", esc(it.tep_goc) + " (" + it.kich_thuoc_goc.join(" × ") + (it.giu_nguyen_320x240 ? ", giữ nguyên từng điểm ảnh)" : ", đã thu về 320 × 240 xám)")) +
-        row("128 công tắc (16 byte đầu của thẻ HMAC)", '<span class="hex">' + it.T_dau16 + "</span>") +
-        row("Tám dòng đầu của cách xáo", '<span class="perm">' + it.pi_dau8.join(", ") + ", …</span>") +
-        row("Mức che giấu của ảnh đã xáo", "PSNR " + vn(it.psnr_ma_dB, 2) + " dB" + (it.ssim_ma == null ? "" : ", SSIM " + vn(it.ssim_ma, 4)) + " so với ảnh gốc");
-    } else {
-      chinh = row("Số khung n", it.n + " (r = " + it.r + "), đọc từ tiêu đề") +
-        row("Kích thước JPEG", group(it.jpeg_ma_B) + " B sau khi xáo; không có ảnh gốc để so") +
-        row("Bản tin gửi đi", group(it.ban_tin_B) + " B = 12 B tiêu đề + " + group(it.jpeg_ma_B) + " B JPEG") +
-        row("Bên nhận kiểm CRC", '<span class="okmark">Đúng</span>') +
-        row("Khôi phục", "bằng đúng decode_frame của tn16_receiver.py; không có ảnh gốc nên không so từng byte");
-      phu = row("Tệp bản tin", esc(it.tep_goc) + ", " + group(it.ban_tin_B) + " B") +
-        row("FLAGS", "chế độ hoán vị " + it.perm_mode + (it.perm_mode === 2 ? " (PP-C)" : "") + ", chỉ số Q " + it.q_idx);
-    }
-    h += '<table class="tbl facts">' + chinh + "</table>";
-    h += '<div class="dl"><a href="' + esc(it.tep.ban_tin) + '" download>Tải bản tin (.bin)</a><a href="' + esc(it.tep.ma) + '" download>Tải ảnh đã xáo (.jpg)</a>' + (it.tep.khoi_phuc ? '<a href="' + esc(it.tep.khoi_phuc) + '" download>Tải ảnh khôi phục (.png)</a>' : "") + "</div>";
-    h += '<details class="more" id="htChiTiet"' + (moChiTiet ? " open" : "") + '><summary><span class="st">Chi tiết kỹ thuật</span></summary><div class="inner"><table class="tbl facts">' + phu + "</table>" + '<div style="margin-top:.9rem">' + goi + "</div></div></details>";
-    $("htDetail").innerHTML = h;
-  }
-  document.querySelectorAll(".thumb").forEach(b => b.addEventListener("click", () => show(+b.dataset.i)));
-  document.querySelectorAll("#htTable .rowsel").forEach(r => r.addEventListener("click", () => { show(+r.dataset.i); $("htDetail").scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" }); }));
-  show(Math.max(0, items.findIndex(it => it.loai === "mo_phong")));
-})();
 
 /* ---- trình chiếu 7 bước tạo cách xáo ---- */
 const cachXaoDen = (function trinhChieu() {
@@ -1329,7 +1017,7 @@ const cachXaoDen = (function trinhChieu() {
   return go;
 })();
 
-/* ---- mục lục: đánh dấu mục đang xem; mở phần thu gọn khi có neo trỏ vào ---- */
+/* ---- mục lục: đánh dấu mục đang xem; neo cũ vẫn dẫn đúng chỗ ---- */
 (function mucLuc() {
   const links = Array.from(document.querySelectorAll(".toc a"));
   const muc = links.map(a => document.querySelector(a.getAttribute("href")));
@@ -1344,7 +1032,7 @@ const cachXaoDen = (function trinhChieu() {
     const id = decodeURIComponent(location.hash.slice(1));
     const el = id && document.getElementById(id);
     if (!el) return;
-    if (id === "ti-hon") cachXaoDen(0);
+    if (id === "he-thong" || id === "ti-hon") cachXaoDen(0);
     if (id === "may-that") cachXaoDen(1);
     let mo = false;
     for (let d = el.closest("details"); d; d = d.parentElement && d.parentElement.closest("details")) if (!d.open) { d.open = true; mo = true; }
