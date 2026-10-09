@@ -1,0 +1,4 @@
+# Cùng phiên bản với môi trường thực nghiệm trên máy tính của đồ án (Bảng 4.1)
+numpy==2.4.4
+Pillow==12.2.0
+scikit-image==0.26.0

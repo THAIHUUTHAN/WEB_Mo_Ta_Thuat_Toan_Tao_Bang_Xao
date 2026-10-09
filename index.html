@@ -1,0 +1,1169 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mã hóa cảm nhận trên ESP32-CAM — mô hình hệ thống và máy tạo cách xáo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EEF2F5; --surface:#FFFFFF; --ink:#13202B; --muted:#55636F; --rule:#D3DBE2; --rule-strong:#AEBAC4;
+  --led:#E39B00; --led-soft:#FFF1D1; --led-ink:#4A3200;
+  --secret:#3446C4; --secret-soft:#E7EAFF;
+  --ok:#17784A; --ok-soft:#DDF3E7; --bad:#B42318; --bad-soft:#FDE6E3;
+  --code-bg:#0F1A24; --code-ink:#DCE6EE; --code-muted:#7D93A6; --code-kw:#FFB86B; --code-str:#9BE39B; --code-num:#8FC8FF; --code-fn:#E7C6FF;
+  --sans:"Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
+  color-scheme: light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0D141B; --surface:#142029; --ink:#E3EAF0; --muted:#97A5B1; --rule:#25323E; --rule-strong:#3A4A58;
+    --led:#FFB627; --led-soft:#3A2C0C; --led-ink:#FFE3A6;
+    --secret:#93A0FF; --secret-soft:#1D2550;
+    --ok:#4CC38A; --ok-soft:#123826; --bad:#FF8A7E; --bad-soft:#401713;
+    --code-bg:#091017; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0D141B; --surface:#142029; --ink:#E3EAF0; --muted:#97A5B1; --rule:#25323E; --rule-strong:#3A4A58;
+  --led:#FFB627; --led-soft:#3A2C0C; --led-ink:#FFE3A6;
+  --secret:#93A0FF; --secret-soft:#1D2550;
+  --ok:#4CC38A; --ok-soft:#123826; --bad:#FF8A7E; --bad-soft:#401713;
+  --code-bg:#091017; color-scheme: dark;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px);-webkit-text-size-adjust:100%}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:1.0625rem;line-height:1.65;font-variant-numeric:tabular-nums}
+img,canvas{max-width:100%}
+.wrap{max-width:74rem;margin:0 auto;padding:0 clamp(1rem,4vw,2.5rem)}
+.prose{max-width:44rem}
+h1{font-weight:800;font-size:clamp(2.6rem,7.5vw,4.75rem);line-height:1;letter-spacing:-0.03em;margin:0 0 1.25rem}
+h2{font-weight:700;font-size:clamp(1.65rem,3.6vw,2.4rem);line-height:1.12;letter-spacing:-0.02em;margin:0 0 1rem}
+h3{font-weight:700;font-size:1.15rem;line-height:1.3;margin:0 0 .4rem}
+p{margin:0 0 1rem}
+.lead{font-size:clamp(1.1rem,1.8vw,1.3rem);line-height:1.55;max-width:38rem}
+.note{color:var(--muted);font-size:.95rem}
+a{color:var(--secret)}
+section{padding:clamp(3rem,7vw,5.5rem) 0;border-top:1px solid var(--rule)}
+code.inline{font-family:var(--mono);font-size:.9em;background:var(--surface);border:1px solid var(--rule);padding:.05em .35em;border-radius:5px}
+.btn{font:inherit;font-size:.95rem;font-weight:600;line-height:1.2;padding:.65rem 1.05rem;border-radius:10px;border:1.5px solid var(--ink);background:transparent;color:var(--ink);cursor:pointer;min-height:44px}
+.btn:hover{background:var(--surface)}
+.btn.primary{background:var(--ink);color:var(--paper)}
+.btn.primary:hover{opacity:.9}
+.btn.small{font-size:.875rem;padding:.45rem .8rem;min-height:38px}
+.btn:focus-visible,.sw:focus-visible,.tab:focus-visible,input:focus-visible{outline:3px solid var(--secret);outline-offset:2px}
+.row{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center}
+.tag{display:inline-block;font-size:.8rem;font-weight:600;padding:.15rem .55rem;border-radius:6px;vertical-align:.15em;margin-left:.4rem}
+.tag.secret{background:var(--secret-soft);color:var(--secret)}
+.tag.public{background:var(--surface);color:var(--muted);border:1px dashed var(--rule-strong)}
+.hex{font-family:var(--mono);font-size:.92rem;line-height:1.75;word-break:break-word;letter-spacing:.01em}
+.hex .used{color:var(--secret);font-weight:600}
+.hex .unused{color:var(--muted);opacity:.75}
+.panel{background:var(--surface);border:1px solid var(--rule);border-radius:14px;padding:clamp(.9rem,2vw,1.25rem)}
+.frame{background:var(--surface);border:1px solid var(--rule);border-radius:16px;padding:12px}
+.frame canvas{display:block;width:100%;height:auto;image-rendering:pixelated;border-radius:8px;background:#8a939a}
+.cap{font-size:.9rem;color:var(--muted);margin:.6rem .2rem 0}
+
+.hero{padding-top:clamp(2.5rem,7vw,5rem);padding-bottom:clamp(3rem,6vw,4.5rem)}
+.hero-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:clamp(1.5rem,4vw,3.5rem);align-items:center}
+.context{font-size:.95rem;color:var(--muted);max-width:34rem;margin-top:1.25rem}
+
+.toy-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(1.5rem,4vw,3rem);align-items:start}
+.bigsw{display:flex;gap:1rem;margin:1.25rem 0 1rem}
+.bigsw button{font:inherit;cursor:pointer;border:1.5px solid var(--rule-strong);background:var(--surface);color:var(--ink);border-radius:12px;padding:.6rem .8rem;display:flex;align-items:center;gap:.7rem;min-height:56px}
+.bigsw .lever{width:22px;height:40px;border-radius:5px;border:1.5px solid var(--rule-strong);position:relative;background:var(--paper);flex:none}
+.bigsw .lever::after{content:"";position:absolute;left:2px;right:2px;height:15px;bottom:2px;border-radius:3px;background:var(--muted)}
+.bigsw button[aria-pressed="true"]{border-color:var(--led)}
+.bigsw button[aria-pressed="true"] .lever{background:var(--led-soft);border-color:var(--led)}
+.bigsw button[aria-pressed="true"] .lever::after{bottom:auto;top:2px;background:var(--led)}
+.bigsw .st{font-size:.85rem;color:var(--muted);display:block}
+.bigsw b{display:block;font-weight:600}
+.rule-card{font-size:.98rem;margin:0 0 1rem}
+.tiles{display:grid;grid-template-columns:7.5rem 1fr;gap:.55rem 1rem;align-items:center}
+.tiles .lb{font-size:.9rem;color:var(--muted)}
+.tiles .set{display:flex;gap:.4rem}
+.tile{width:3rem;height:3rem;border-radius:8px;display:grid;place-items:center;font-weight:700;font-size:1.15rem;border:1.5px solid var(--rule-strong);transition:transform .25s}
+.tile.A{background:#3D4A55;color:#fff;border-color:#3D4A55}
+.tile.B{background:#8C9AA6;color:#0F1820;border-color:#8C9AA6}
+.tile.C{background:#E8EDF1;color:#13202B;border-color:#B9C4CD}
+.tile.hit{outline:3px solid var(--led);outline-offset:2px}
+.chips{display:flex;flex-wrap:wrap;gap:.5rem;margin:.75rem 0 0}
+.chip{display:flex;flex-direction:column;align-items:center;gap:.2rem;padding:.45rem .6rem;border-radius:10px;border:1.5px solid var(--rule-strong);background:var(--surface);min-width:5.2rem}
+.chip .w{font-family:var(--mono);font-weight:600;font-size:1rem;letter-spacing:.12em}
+.chip .s{font-size:.75rem;color:var(--muted)}
+.chip.never{border-style:dashed;opacity:.6}
+.chip.now{border-color:var(--led);background:var(--led-soft)}
+.chip.now .s{color:var(--led-ink)}
+.points{margin:1.25rem 0 0;padding:0;list-style:none;display:grid;gap:.75rem}
+.points li{padding-left:1.1rem;position:relative}
+.points li::before{content:"";position:absolute;left:0;top:.68em;width:.45rem;height:.45rem;border-radius:2px;background:var(--led)}
+
+.steps{list-style:none;margin:2rem 0 0;padding:0;counter-reset:st}
+.steps>li{display:grid;grid-template-columns:minmax(0,23rem) minmax(0,1fr);gap:clamp(1rem,3vw,2.5rem);padding:clamp(1.5rem,3vw,2.25rem) 0;border-top:1px dashed var(--rule-strong);counter-increment:st}
+.steps>li:first-child{border-top:0}
+.steps .num{display:flex;gap:.85rem;align-items:flex-start}
+.steps .num::before{content:counter(st);flex:none;width:2.4rem;height:2.4rem;border-radius:50%;border:2px solid var(--ink);display:grid;place-items:center;font-weight:800;font-size:1.05rem;margin-top:-.15rem}
+.steps p{font-size:.98rem;color:var(--ink);margin:0}
+.steps p+p{margin-top:.6rem}
+.nval{font-size:1.6rem;font-weight:800;min-width:3.5rem;text-align:center}
+.dip-lab{font-size:.88rem;color:var(--muted);margin:.5rem 0 .3rem;font-variant-numeric:tabular-nums}
+.dip-lab b{color:var(--ink);font-weight:600}
+.dip{display:grid;grid-template-columns:repeat(32,minmax(0,1fr));gap:3px}
+.sw{appearance:none;-webkit-appearance:none;padding:0;margin:0;height:30px;border-radius:4px;border:1px solid var(--rule-strong);background:var(--paper);position:relative;cursor:pointer}
+.sw::after{content:"";position:absolute;left:2px;right:2px;height:42%;bottom:2px;border-radius:2px;background:var(--rule-strong)}
+.sw.on{background:var(--led-soft);border-color:var(--led)}
+.sw.on::after{bottom:auto;top:2px;background:var(--led)}
+.sw.flash{box-shadow:0 0 0 2px var(--secret)}
+.manual{font-size:.9rem;color:var(--led-ink);background:var(--led-soft);border-radius:8px;padding:.45rem .7rem;margin-top:.75rem}
+.manual:empty{display:none}
+table{border-collapse:collapse;width:100%}
+.tbl{font-size:.95rem}
+.tbl th,.tbl td{text-align:left;padding:.5rem .6rem;border-bottom:1px solid var(--rule);vertical-align:top}
+.tbl th{font-weight:600;color:var(--muted);font-size:.85rem}
+.tbl.nowrap th,.tbl.nowrap td{white-space:nowrap}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.worked{margin:.85rem 0 0;font-size:.95rem;background:var(--paper);border-radius:10px;padding:.7rem .85rem}
+.pair{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:.8rem;margin-top:.9rem}
+.pair .frame{padding:8px}
+.pair .cap{margin-top:.4rem}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(12rem,1fr));gap:.8rem;margin-top:.9rem}
+.metric{background:var(--paper);border-radius:10px;padding:.7rem .85rem}
+.metric .k{font-size:.85rem;color:var(--muted)}
+.metric .v{font-size:1.05rem;font-weight:700}
+.perm{font-family:var(--mono);font-size:.9rem}
+
+.count-out{font-family:var(--mono);font-weight:600;font-size:clamp(1rem,2.6vw,1.45rem);line-height:1.45;word-break:break-all;margin:.4rem 0 .25rem}
+.slider-row{display:flex;align-items:center;gap:1rem;margin:1.5rem 0 .5rem}
+.slider-row input{flex:1;accent-color:var(--led);min-height:44px}
+.slider-row .k{font-weight:800;font-size:1.5rem;min-width:4.5rem}
+.callout{border-left:4px solid var(--led);padding:.6rem 0 .6rem 1rem;margin:1rem 0 0;font-size:.98rem}
+.callout.secret{border-color:var(--secret)}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(1rem,3vw,2rem);margin-top:2rem}
+
+.fp td.got,.fp td.exp{font-family:var(--mono);font-size:.88rem;word-break:break-word}
+.badge{display:inline-block;font-weight:700;font-size:.85rem;padding:.15rem .55rem;border-radius:6px}
+.badge.ok{background:var(--ok-soft);color:var(--ok)}
+.badge.bad{background:var(--bad-soft);color:var(--bad)}
+.fp-sum{font-size:1.1rem;font-weight:700;margin:1rem 0 0}
+
+.q3{font-size:.93rem}
+.q3 td:first-child{font-weight:700;white-space:nowrap}
+.tabs{display:flex;flex-wrap:wrap;gap:.4rem;margin:1.75rem 0 0;border-bottom:1px solid var(--rule)}
+.tab{font:inherit;font-size:.92rem;font-weight:600;padding:.6rem .9rem;border:1px solid transparent;border-bottom:0;border-radius:10px 10px 0 0;background:transparent;color:var(--muted);cursor:pointer;margin-bottom:-1px;min-height:44px}
+.tab[aria-selected="true"]{background:var(--code-bg);color:var(--code-ink);border-color:var(--code-bg)}
+.codepanel{background:var(--code-bg);color:var(--code-ink);border-radius:0 12px 12px 12px;padding:1rem 0 .5rem}
+.codehead{display:flex;flex-wrap:wrap;gap:.75rem;justify-content:space-between;align-items:flex-start;padding:0 1.1rem .75rem;border-bottom:1px solid rgba(255,255,255,.08)}
+.codehead .src{font-size:.88rem;color:var(--code-muted);max-width:46rem}
+.codehead .src b{color:var(--code-ink);font-weight:600}
+.copy{font:inherit;font-size:.85rem;font-weight:600;color:var(--code-ink);background:transparent;border:1px solid rgba(255,255,255,.25);border-radius:8px;padding:.4rem .75rem;cursor:pointer;min-height:36px}
+.copy:hover{background:rgba(255,255,255,.08)}
+.cut{font-size:.85rem;color:var(--code-muted);padding:.55rem 1.1rem;border-top:1px dashed rgba(255,255,255,.12);border-bottom:1px dashed rgba(255,255,255,.12);background:rgba(255,255,255,.03)}
+.codepanel pre{margin:0;overflow-x:auto;padding:.75rem 1.1rem}
+.codepanel code{font-family:var(--mono);font-size:.84rem;line-height:1.6;white-space:pre;color:var(--code-ink);background:transparent}
+.hljs-comment,.hljs-quote{color:var(--code-muted);font-style:italic}
+.hljs-keyword,.hljs-meta,.hljs-built_in,.hljs-type{color:var(--code-kw)}
+.hljs-string,.hljs-doctag{color:var(--code-str)}
+.hljs-number,.hljs-literal{color:var(--code-num)}
+.hljs-title,.hljs-title.function_,.hljs-params{color:var(--code-fn)}
+.limits{display:grid;grid-template-columns:repeat(auto-fit,minmax(16rem,1fr));gap:1rem;margin-top:1.75rem}
+.limit{background:var(--surface);border:1px solid var(--rule);border-radius:14px;padding:1.1rem 1.2rem}
+.limit h3{font-size:1.02rem}
+.limit p{font-size:.95rem;margin:0}
+footer{border-top:1px solid var(--rule);padding:2.5rem 0 3rem;color:var(--muted);font-size:.92rem}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+@media (max-width:860px){
+  .hero-grid,.toy-grid,.two{grid-template-columns:minmax(0,1fr)}
+  .steps>li{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:560px){
+  .dip{grid-template-columns:repeat(16,minmax(0,1fr))}
+  .sw{height:28px}
+  .tiles{grid-template-columns:5.5rem 1fr}
+  .tile{width:2.6rem;height:2.6rem}
+  .pair{grid-template-columns:minmax(0,1fr)}
+}
+@media (prefers-reduced-motion: reduce){ .tile{transition:none} }
+.ht-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(13rem,1fr));gap:.8rem;margin:1.75rem 0 0}
+.ht-metrics .metric{background:var(--surface);border:1px solid var(--rule);border-radius:12px;padding:.85rem 1rem}
+.ht-metrics .v{font-size:1.35rem;font-weight:800;letter-spacing:-.01em}
+.ht-metrics .s{font-size:.85rem;color:var(--muted)}
+.thumbs{display:flex;gap:.6rem;overflow-x:auto;padding:.4rem .1rem .8rem;margin:1.5rem 0 .5rem;-webkit-overflow-scrolling:touch}
+.thumb{font:inherit;flex:none;width:8.5rem;border:1.5px solid var(--rule);border-radius:12px;background:var(--surface);color:var(--ink);padding:6px;cursor:pointer;text-align:left}
+.thumb img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:7px;image-rendering:pixelated;background:#8a939a}
+.thumb span{display:block;font-size:.78rem;margin-top:.35rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.thumb .k{color:var(--muted)}
+.thumb[aria-pressed="true"]{border-color:var(--ink);box-shadow:0 0 0 2px var(--ink) inset}
+.thumb:focus-visible{outline:3px solid var(--secret);outline-offset:2px}
+.flow3{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) auto minmax(0,1fr);gap:.6rem;align-items:center}
+.flow3 figure{margin:0}
+.flow3 img{display:block;width:100%;aspect-ratio:4/3;border-radius:8px;image-rendering:pixelated;background:#8a939a}
+.flow3 .arrow{font-size:1.4rem;color:var(--muted);text-align:center}
+.flow3 .cap b{color:var(--ink);font-weight:600;display:block}
+.flow3 .none{aspect-ratio:4/3;border-radius:8px;border:1.5px dashed var(--rule-strong);display:grid;place-items:center;text-align:center;font-size:.85rem;color:var(--muted);padding:.5rem}
+.pkt{display:flex;flex-wrap:wrap;gap:5px;margin:1.25rem 0 .25rem}
+.seg{border:1px solid var(--rule-strong);border-radius:8px;padding:.35rem .55rem;text-align:center;background:var(--paper)}
+.seg .b{font-family:var(--mono);font-size:.88rem;font-weight:600;display:block}
+.seg .l{font-size:.72rem;color:var(--muted);display:block}
+.seg.cnt{border-color:var(--secret)}
+.seg.cnt .b{color:var(--secret)}
+.seg.jpg{border-style:dashed}
+.ht-detail{margin-top:.5rem}
+.ht-detail h3{margin-bottom:1rem}
+.okmark{color:var(--ok);font-weight:700}
+.badmark{color:var(--bad);font-weight:700}
+.rowsel{cursor:pointer}
+.rowsel:hover td{background:var(--paper)}
+.rowsel.sel td{background:var(--led-soft)}
+details.log{margin-top:1.25rem;font-size:.92rem}
+details.log summary{cursor:pointer;font-weight:600}
+details.log pre{font-family:var(--mono);font-size:.8rem;background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:.8rem;overflow-x:auto;white-space:pre}
+.dl{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1rem}
+.dl a{font-size:.88rem;font-weight:600;color:var(--ink);border:1.5px solid var(--ink);border-radius:9px;padding:.4rem .7rem;text-decoration:none}
+.dl a:hover{background:var(--paper)}
+@media (max-width:760px){.flow3{grid-template-columns:minmax(0,1fr)}.flow3 .arrow{transform:rotate(90deg)}}
+</style>
+</head>
+<body>
+
+<header class="wrap hero">
+  <div class="hero-grid">
+    <div>
+      <h1>Máy tạo cách xáo</h1>
+      <p class="lead">Mỗi khung ảnh 320 × 240 của ESP32-CAM được cắt thành 1 200 ô vuông 8 × 8 rồi đảo vị trí. Trang này cho thấy thiết bị tạo ra thứ tự đảo đó từ một khóa bí mật như thế nào, vì sao máy chủ tạo lại được đúng thứ tự ấy, và vì sao có tới 2<sup>128</sup> cách đảo khác nhau.</p>
+      <div class="row" style="margin-top:1.5rem">
+        <button class="btn primary" id="heroNext" type="button">Khung tiếp theo</button>
+        <button class="btn" id="heroUndo" type="button">Bên nhận xếp lại</button>
+        <a class="btn" href="#he-thong" style="text-decoration:none;display:inline-flex;align-items:center">Ảnh chạy qua hệ thống</a>
+      </div>
+      <p class="context">Phương án PP-C trong đồ án tốt nghiệp “Nghiên cứu phương pháp mã hóa cảm nhận và ứng dụng trong IoT”. Mọi con số trên trang được tính trực tiếp trong trình duyệt bằng đúng thuật toán của đồ án.</p>
+    </div>
+    <figure class="frame" style="margin:0">
+      <canvas id="heroCanvas" width="320" height="240" aria-label="Ảnh 320 × 240 gồm 1 200 ô đang được xáo hoặc xếp lại"></canvas>
+      <figcaption class="cap" id="heroCap">Khung số 0, khóa thử của đồ án</figcaption>
+    </figure>
+  </div>
+</header>
+
+<main>
+<section id="he-thong">
+  <div class="wrap">
+    <div class="prose">
+      <h2>Ảnh chạy qua hệ thống</h2>
+      <p>Mỗi ảnh trong thư mục <code class="inline">anh/</code> được xử lý bằng đúng mã của đồ án. Bên gửi xáo 1 200 ô, nén JPEG và đóng gói bản tin 12 byte tiêu đề như firmware ESP32; bên nhận dùng nguyên hàm <code class="inline">parse_frame</code> và <code class="inline">decode_frame</code> của <code class="inline">tn16_receiver.py</code> để khôi phục.</p>
+      <p class="note">Đây là số đo trên máy tính, dùng bộ nén JPEG của Pillow, không phải bộ nén trên ESP32. Bản tin thật bắt từ ESP32-CAM (nếu có trong <code class="inline">ban_tin_esp32/</code>) được ghi rõ là bản tin thật.</p>
+    </div>
+    <div class="panel" id="htEmpty" hidden style="margin-top:1.5rem;max-width:44rem">
+      <h3>Chưa có ảnh nào được xử lý</h3>
+      <p style="margin:0">Đặt ảnh vào thư mục <code class="inline">anh/</code>, chạy <code class="inline">python tools/dung_trang.py</code>, rồi tải lại trang này.</p>
+    </div>
+    <div id="htBody" hidden>
+      <div class="ht-metrics" id="htMetrics"></div>
+      <div class="thumbs" id="htThumbs" role="group" aria-label="Chọn ảnh để xem"></div>
+      <div class="panel ht-detail" id="htDetail" aria-live="polite"></div>
+      <h3 style="margin-top:2rem">Tổng hợp mọi ảnh</h3>
+      <div class="panel scroll"><table class="tbl nowrap" id="htTable"></table></div>
+      <details class="log"><summary>Tham số chạy, vân tay và nhật ký tự kiểm bên nhận</summary><pre id="htLog"></pre></details>
+    </div>
+  </div>
+</section>
+
+<section id="ti-hon">
+  <div class="wrap">
+    <div class="toy-grid">
+      <div class="prose">
+        <h2>Thu nhỏ còn 3 ô và 2 công tắc</h2>
+        <p>Trước khi nhìn máy thật, hãy xem một phiên bản đủ nhỏ để đếm bằng tay. Có 3 ô A, B, C. Máy làm hai lượt đổi chỗ:</p>
+        <p><strong>Lượt 1</strong> xét vị trí 3, rút một vị trí từ 1 đến 3 rồi đổi chỗ hai ô.<br><strong>Lượt 2</strong> xét vị trí 2, rút một vị trí từ 1 đến 2 rồi đổi chỗ.</p>
+        <p>Máy không tung đồng xu. Nó nhìn thế của hai công tắc để biết rút số nào. Gạt thử hai công tắc dưới đây.</p>
+        <div class="bigsw" role="group" aria-label="Hai công tắc của máy tí hon">
+          <button type="button" id="toyS1" aria-pressed="false"><span class="lever" aria-hidden="true"></span><span><b>Công tắc 1</b><span class="st" id="toyS1t">đang tắt</span></span></button>
+          <button type="button" id="toyS2" aria-pressed="false"><span class="lever" aria-hidden="true"></span><span><b>Công tắc 2</b><span class="st" id="toyS2t">đang tắt</span></span></button>
+        </div>
+      </div>
+      <div class="panel" aria-live="polite">
+        <p class="rule-card" id="toyRule"></p>
+        <div class="tiles" id="toyTiles"></div>
+        <p style="margin:1.25rem 0 0;font-size:.95rem">3 ô có 6 cách xếp. Máy 2 công tắc chỉ tạo ra được 4 trong số đó:</p>
+        <div class="chips" id="toyChips"></div>
+      </div>
+    </div>
+    <ul class="points prose" style="max-width:60rem">
+      <li><strong>Cùng thế công tắc thì luôn ra cùng cách xáo.</strong> Nhờ vậy máy chủ làm lại được đúng như thiết bị.</li>
+      <li><strong>Số cách xáo bằng số thế công tắc, không phải số cách xếp.</strong> Hai công tắc có 4 thế nên chỉ có 4 cách xáo; hai thứ tự còn lại không bao giờ xuất hiện.</li>
+      <li><strong>Nếu hai thế công tắc cho cùng một kết quả</strong> thì số cách xáo còn ít hơn nữa. Phương án cũ PP-A hỏng đúng vì chuyện này.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="may-that">
+  <div class="wrap">
+    <div class="prose">
+      <h2>Máy thật, từng bước với số thật</h2>
+      <p>Lúc mở trang, máy dùng khóa thử <code class="inline">00 01 02 … 1f</code> và khung số 0, đúng cấu hình đã sinh ra bộ vân tay ở Bảng 3.5 của đồ án. Bấm thử các nút ở bước 1, 2 và 4, rồi nhìn ảnh ở bước 6 thay đổi.</p>
+    </div>
+    <ol class="steps">
+      <li>
+        <div class="num"><div><h3>Khóa chủ <span class="tag secret">bí mật</span></h3>
+          <p>32 byte, chỉ nằm trong thiết bị và máy chủ, không bao giờ gửi qua mạng. Khóa thử của đồ án là 00 01 02 … 1f; hệ thật phải dùng khóa sinh ngẫu nhiên và nạp riêng.</p></div></div>
+        <div class="panel">
+          <div class="hex" id="keyHex"></div>
+          <div class="row" style="margin-top:.85rem">
+            <button class="btn small" id="kTest" type="button">Khóa thử của đồ án</button>
+            <button class="btn small" id="kFlip" type="button">Đổi 1 bit khóa</button>
+            <button class="btn small" id="kRand" type="button">Khóa khác</button>
+          </div>
+        </div>
+      </li>
+      <li>
+        <div class="num"><div><h3>Số thứ tự khung <span class="tag public">công khai</span></h3>
+          <p>Tăng thêm 1 sau mỗi khung và được gửi kèm ảnh. Nó được viết thành 8 byte: 4 byte số khung, 4 byte tham số r luôn bằng 0 với PP-C.</p></div></div>
+        <div class="panel">
+          <div class="row">
+            <button class="btn small" id="nMinus" type="button" aria-label="Khung trước">−</button>
+            <span class="nval" id="nVal" aria-live="polite">0</span>
+            <button class="btn small" id="nPlus" type="button" aria-label="Khung sau">+</button>
+          </div>
+          <p class="note" style="margin:.75rem 0 0">8 byte đưa vào máy trộn</p>
+          <div class="hex" id="msgHex"></div>
+        </div>
+      </li>
+      <li>
+        <div class="num"><div><h3>Máy trộn HMAC-SHA256 <span class="tag public">công khai</span></h3>
+          <p>Trộn khóa chủ với 8 byte ở bước 2 thành 32 byte trông như ngẫu nhiên. Cùng đầu vào luôn ra cùng kết quả; đổi đầu vào một chút thì kết quả khác hẳn; nhìn kết quả không suy ngược ra được khóa.</p>
+          <p>Chỉ 16 byte đầu được dùng tiếp. Giữa hai khung liền nhau, máy trộn làm khoảng một nửa số công tắc ở bước 4 đổi thế, trung bình 64 trên 128.</p></div></div>
+        <div class="panel">
+          <div class="hex" id="tagHex"></div>
+          <p class="note" style="margin:.6rem 0 0"><span style="color:var(--secret);font-weight:600">16 byte đầu</span> đi tiếp sang bước 4; 16 byte sau bỏ đi.</p>
+        </div>
+      </li>
+      <li>
+        <div class="num"><div><h3>128 công tắc <span class="tag secret">bí mật</span></h3>
+          <p>16 byte là 128 bit, mỗi bit là một công tắc: lên là bật, xuống là tắt. Cứ 32 công tắc đọc thành một số, được 4 số.</p>
+          <p>Mọi bước phía sau chỉ nhìn vào 128 công tắc này. Bấm vào một công tắc để tự gạt thử.</p></div></div>
+        <div class="panel">
+          <div id="dipBank"></div>
+          <p class="note" style="margin:.75rem 0 0">So với lần trước: <strong id="swDiff" style="color:var(--ink)">chưa có lần trước</strong></p>
+          <div class="manual" id="manualNote" aria-live="polite"></div>
+        </div>
+      </li>
+      <li>
+        <div class="num"><div><h3>Máy rút thăm và đổi chỗ <span class="tag public">công khai</span></h3>
+          <p>Xếp 1 200 ô thành một hàng, đánh số 0 đến 1 199. Đi từ ô cuối về đầu. Mỗi lượt, máy rút thăm (xoshiro128**) khuấy 4 số bằng vài phép trên bit: dịch, xoay vòng, XOR, nhân với 5 và với 9, rồi nhả ra một số từ 0 đến 4 294 967 295.</p>
+          <p>Số đó đổi thành tỉ lệ phần trăm, rồi lấy đúng tỉ lệ ấy trên phần hàng còn lại để chọn ô đổi chỗ. Tổng cộng 1 199 lượt.</p></div></div>
+        <div class="panel">
+          <div class="scroll"><table class="tbl nowrap"><thead><tr><th>Lượt</th><th>Xét ô</th><th>Số máy nhả ra</th><th>Tỉ lệ</th><th>Đổi chỗ với</th></tr></thead><tbody id="drawBody"></tbody></table></div>
+          <p class="worked" id="worked"></p>
+        </div>
+      </li>
+      <li>
+        <div class="num"><div><h3>Cách xáo và ảnh gửi đi</h3>
+          <p>Kết quả là một bảng 1 200 dòng: ô thứ i của ảnh gửi đi lấy từ ô nào của ảnh gốc. Ảnh đã xáo được nén JPEG rồi gửi đi; bảng thì không bao giờ rời thiết bị.</p>
+          <p>Máy chủ có cùng khóa chủ, nhận số khung, chạy lại đúng các bước trên và trả từng ô về chỗ cũ.</p></div></div>
+        <div class="panel">
+          <p style="margin:0;font-size:.95rem">Tám dòng đầu của bảng: <span class="perm" id="permHead"></span></p>
+          <div class="pair">
+            <figure class="frame" style="margin:0"><canvas id="origCanvas" width="320" height="240" aria-label="Ảnh gốc"></canvas><figcaption class="cap">Ảnh gốc, chỉ thiết bị thấy</figcaption></figure>
+            <figure class="frame" style="margin:0"><canvas id="mixCanvas" width="320" height="240" aria-label="Ảnh sau khi xáo"></canvas><figcaption class="cap">Ảnh gửi đi sau khi xáo</figcaption></figure>
+          </div>
+          <div class="metrics">
+            <div class="metric"><div class="k">Vừa thay đổi</div><div class="v" id="lastAct" aria-live="polite"></div></div>
+            <div class="metric"><div class="k">Số ô còn đúng chỗ so với lần xáo trước</div><div class="v" id="sameCount"></div></div>
+          </div>
+          <p class="note" style="margin:.7rem 0 0">Hai lần xáo hoàn toàn không liên quan nhau thì trung bình chỉ trùng khoảng 1 ô.</p>
+        </div>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<section id="vi-sao-2-128">
+  <div class="wrap">
+    <div class="prose">
+      <h2>Vì sao có 2<sup>128</sup> cách xáo</h2>
+      <p>Từ bước 4 trở đi, máy chỉ đọc 128 công tắc. Vì vậy số cách xáo khác nhau bằng đúng số thế khác nhau của 128 công tắc, giống ví dụ tí hon, nơi 2 công tắc cho đúng 4 cách xáo. Kéo thanh trượt để thấy mỗi công tắc thêm vào làm số thế gấp đôi.</p>
+    </div>
+    <div class="panel" style="margin-top:1.5rem">
+      <label for="kSlider" class="note" style="display:block">Số công tắc</label>
+      <div class="slider-row" style="margin-top:.25rem">
+        <span class="k" id="kOut">128</span>
+        <input type="range" id="kSlider" min="1" max="128" step="1" value="128">
+      </div>
+      <p class="note" style="margin:.5rem 0 0">Số thế khác nhau</p>
+      <div class="count-out" id="countOut" aria-live="polite"></div>
+      <p class="note" id="digitsOut" style="margin:0"></p>
+      <div class="callout" id="kCallout"></div>
+    </div>
+    <div class="two">
+      <div>
+        <h3>Không thể nhiều hơn</h3>
+        <p>1 200 ô có số cách xếp lớn khủng khiếp, một số hơn 3 000 chữ số. Nhưng máy chỉ tạo được những cách xáo ứng với một thế công tắc, giống máy bán hàng chỉ đưa ra được món nào có nút bấm.</p>
+      </div>
+      <div>
+        <h3>Không bị co lại</h3>
+        <p>Máy rút thăm chỉ dùng số nguyên và phép biến đổi một đổi một, nên hai thế công tắc khác nhau không bao giờ nhập làm một. PP-A tính bằng số thực float32: phép làm tròn gộp 8 388 608 khả năng trên giấy xuống còn 190 277 cách xáo thật (Bảng 4.12), đủ nhỏ để dựng bảng tra phá được trong khoảng 11 giây.</p>
+      </div>
+    </div>
+    <p class="note prose" style="margin-top:1rem">Chính xác thì là tối đa 2<sup>128</sup> − 1 cách, vì thế “tắt hết” bị máy rút thăm loại; khác biệt này không đáng kể.</p>
+  </div>
+</section>
+
+<section id="van-tay">
+  <div class="wrap">
+    <div class="prose">
+      <h2>Trang này chạy đúng thuật toán của đồ án</h2>
+      <p>Bảng 3.5 của đồ án liệt kê các giá trị trung gian đã khớp từng bit giữa máy tính và ESP32. Trang tự tính lại chúng bằng bản JavaScript ở phần mã nguồn và so sánh với giá trị kỳ vọng.</p>
+    </div>
+    <div class="panel scroll" style="margin-top:1.5rem">
+      <table class="tbl fp">
+        <thead><tr><th>Đại lượng kiểm</th><th>Kỳ vọng (Bảng 3.5)</th><th>Trang này tính được</th><th>Kết quả</th></tr></thead>
+        <tbody id="fpBody"></tbody>
+      </table>
+      <p class="fp-sum" id="fpSum" aria-live="polite"></p>
+    </div>
+  </div>
+</section>
+
+<section id="ma-nguon">
+  <div class="wrap">
+    <div class="prose">
+      <h2>Mã nguồn tạo cách xáo trong đồ án</h2>
+      <p>Ba thẻ đầu trích nguyên văn từ mã nguồn của đồ án; thẻ cuối là bản chuyển sang JavaScript mà trang này đang chạy. Bảy quy ước dưới đây (Bảng 3.3) là thứ hai bên phải hiểu giống hệt nhau, nếu không bên nhận sẽ không khôi phục được ảnh.</p>
+    </div>
+    <div class="panel scroll" style="margin-top:1.25rem;max-width:56rem">
+      <table class="tbl q3">
+        <tbody>
+          <tr><td>Q1</td><td>Bản tin dẫn xuất M = be32(counter) ‖ be32(r), dài 8 byte</td></tr>
+          <tr><td>Q2</td><td>Thẻ T = HMAC-SHA256(K_master, M), dài 32 byte</td></tr>
+          <tr><td>Q3</td><td>Trạng thái bộ sinh: s[k] là số nguyên 32 bit không dấu đọc big-endian từ T[4k…4k+3], k = 0…3</td></tr>
+          <tr><td>Q4</td><td>Bộ sinh xoshiro128**, cập nhật trạng thái theo đúng thứ tự phép toán chuẩn</td></tr>
+          <tr><td>Q5</td><td>Chỉ số hoán vị j = (uint64)next() × (i + 1) ≫ 32, phương pháp Lemire, không dùng phép chia dư</td></tr>
+          <tr><td>Q6</td><td>Fisher–Yates duyệt giảm dần, i chạy từ B − 1 về 1</td></tr>
+          <tr><td>Q7</td><td>Khối đích thứ i nhận nội dung của khối nguồn thứ π(i); phép nghịch đảo làm ngược lại</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note prose" style="margin-top:1rem">Khi đối chiếu: chú thích trong mã nguồn dùng cách đánh số cũ, trong đó PP-C là Q7 và Lemire là Q7b; Bảng 3.3 đánh số lại thành Q1–Q7 như trên. Thuật toán giống hệt nhau, chỉ khác cách đánh số.</p>
+
+    <div class="tabs" role="tablist" aria-label="Các tệp mã nguồn">
+      <button class="tab" role="tab" id="tab-py" aria-controls="pane-py" aria-selected="true" type="button">cpe_core.py</button>
+      <button class="tab" role="tab" id="tab-c" aria-controls="pane-c" aria-selected="false" tabindex="-1" type="button">Firmware ESP32 (C)</button>
+      <button class="tab" role="tab" id="tab-rx" aria-controls="pane-rx" aria-selected="false" tabindex="-1" type="button">Bên nhận</button>
+      <button class="tab" role="tab" id="tab-js" aria-controls="pane-js" aria-selected="false" tabindex="-1" type="button">Bản JavaScript của trang</button>
+    </div>
+    <div class="codepanel" role="tabpanel" id="pane-py" aria-labelledby="tab-py">
+      <div class="codehead"><div class="src"><b>cpe_core.py</b>, nhân tham chiếu dùng chung cho máy chủ và mọi thí nghiệm (mục 3.4). Trích nguyên văn; phần PP-A cũ được lược. Tệp đầy đủ: <a href="ma_do_an/cpe_core.py" style="color:var(--code-num)">ma_do_an/cpe_core.py</a>.</div><button class="copy" type="button" data-copy="pane-py" data-cmt="#">Sao chép</button></div>
+      <pre><code class="language-python">#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+cpe_core.py — NHÂN THAM CHIẾU CHÍNH TẮC của hệ CPE (Encryption-then-Compression)
+Đồ án: Thái Hữu Thân — AT19A — AT190149 — GVHD: ThS. Hoàng Thu Phương
+
+ĐÂY LÀ FILE GỐC DUY NHẤT. Mọi script thí nghiệm (TN0..TN9) phải import từ đây,
+không được cài đặt lại thuật toán. Nhân này đã bị dựng lại NĂM LẦN trong quá trình
+chuẩn bị; lần này mọi quy ước đều được viết thành hằng số và chú thích có thể kiểm
+chứng bằng cpe_vantay.py.
+
+BẢY QUY ƯỚC BẮT BUỘC (thiếu bất kỳ cái nào là bên nhận KHÔNG giải mã được):
+  Q1. Bản tin dẫn xuất: M = be32(counter_n) || be32(r)          — 8 byte
+  Q2. Thẻ:              T = HMAC-SHA256(K_master, M)            — 32 byte
+  Q3. Hạt giống:        u23 = (T[0]&lt;&lt;16 | T[1]&lt;&lt;8 | T[2]) &amp; 0x7FFFFF
+                        x0  = float32((u23 + 0.5) / 8388608.0)
+  Q4. Bước lặp float32: x &lt;- (r*x)*(1-x)  TÍNH TỪ TRÁI SANG PHẢI, r = 3.99f
+      *** KHÔNG được viết r*(x*(1-x)) — cho quỹ đạo KHÁC HẲN, xem §so sánh dưới.
+      *** KHÔNG được để trình biên dịch hợp nhất FMA: bắt buộc -ffp-contract=off
+  Q5. WARMUP = 150 bước, bỏ đi.
+  Q6. PP-A Fisher-Yates giảm dần: với i = N-1..1
+        y = (2/pi) * asin(sqrt(x))   &lt;-- tính từ x HIỆN TẠI
+        j = floor(y * (i+1))         &lt;-- ép về [0..i]
+        swap(p[i], p[j])
+        x = step(x)                  &lt;-- LẶP X SAU KHI ĐÃ DÙNG
+  Q7. PP-C xoshiro128**: s[k] = uint32 BIG-ENDIAN từ T[4k..4k+3], k = 0..3
+        j = (uint32)((uint64)next() * (i+1) &gt;&gt; 32)   &lt;-- LEMIRE, không chia dư
+"""
+import hmac, hashlib, struct, math, array
+import numpy as np
+
+# ------------------------- Tham số hệ thống đã chốt -------------------------
+W, H          = 320, 240          # QVGA xám
+BS            = 8                 # kích thước khối
+NBLK          = (W // BS) * (H // BS)   # 1200
+FRAME_BYTES   = W * H             # 76800
+R_LOGISTIC    = 3.99
+WARMUP        = 150
+SHORT_CYCLE_T = 1350              # ngưỡng chu kỳ ngắn -&gt; retry-nonce
+K_MASTER_TEST = bytes(range(32))  # KHÓA THÍ NGHIỆM: 00 01 02 ... 1f
+
+_f32  = np.float32
+_R    = _f32(R_LOGISTIC)
+_ONE  = _f32(1.0)
+_C2PI = _f32(2.0 / math.pi)
+
+# ------------------------------- Q1..Q3 -------------------------------------
+def hmac_tag(counter_n: int, r: int = 0, key: bytes = K_MASTER_TEST) -&gt; bytes:
+    """Q1 + Q2. M = be32(counter_n) || be32(r); T = HMAC-SHA256(K, M)."""
+    return hmac.new(key, struct.pack('&gt;II', counter_n &amp; 0xFFFFFFFF, r &amp; 0xFFFFFFFF),
+                    hashlib.sha256).digest()</code></pre>
+      <div class="cut">Lược phần PP-A (Logistic Map float32, dòng 53–103 của tệp): phương án cũ, đã được thay bằng PP-C.</div>
+      <pre><code class="language-python"># --------------------------------- Q7 ---------------------------------------
+class Xoshiro128SS:
+    """xoshiro128** — chỉ dùng số nguyên 32 bit, KHÔNG có rủi ro lệch nền tảng."""
+    __slots__ = ('s',)
+    def __init__(self, s):
+        self.s = [v &amp; 0xFFFFFFFF for v in s]
+    @staticmethod
+    def _rotl(x, k):
+        return ((x &lt;&lt; k) | (x &gt;&gt; (32 - k))) &amp; 0xFFFFFFFF
+    def next(self):
+        s = self.s
+        out = (self._rotl((s[1] * 5) &amp; 0xFFFFFFFF, 7) * 9) &amp; 0xFFFFFFFF
+        t = (s[1] &lt;&lt; 9) &amp; 0xFFFFFFFF
+        s[2] ^= s[0]; s[3] ^= s[1]; s[1] ^= s[2]; s[0] ^= s[3]; s[2] ^= t
+        s[3] = self._rotl(s[3], 11)
+        return out
+
+def seed_C_from_tag(T: bytes) -&gt; list:
+    """Q7a. 128 bit đầu của thẻ, mỗi 4 byte đọc BIG-ENDIAN."""
+    return [struct.unpack('&gt;I', T[4 * k:4 * k + 4])[0] for k in range(4)]
+
+def perm_C_from_tag(T: bytes, n: int = NBLK) -&gt; list:
+    g = Xoshiro128SS(seed_C_from_tag(T))
+    p = list(range(n))
+    for i in range(n - 1, 0, -1):
+        j = (g.next() * (i + 1)) &gt;&gt; 32          # Q7b: Lemire
+        p[i], p[j] = p[j], p[i]
+    return p
+
+def perm_C(counter_n: int, r: int = 0, key: bytes = K_MASTER_TEST, n: int = NBLK) -&gt; list:
+    return perm_C_from_tag(hmac_tag(counter_n, r, key), n)</code></pre>
+      <div class="cut">Áp cách xáo lên ảnh (dòng 137–148)</div>
+      <pre><code class="language-python"># ------------------------- Áp hoán vị lên framebuffer ------------------------
+def permute_blocks(buf: bytes, perm: list, w: int = W, h: int = H, bs: int = BS) -&gt; bytearray:
+    """Không tại chỗ: out[khối i] = in[khối perm[i]]. Tốn thêm 76800 B RAM."""
+    bw = w // bs
+    out = bytearray(len(buf))
+    for i, src in enumerate(perm):
+        di, dj = divmod(i, bw); si, sj = divmod(src, bw)
+        for row in range(bs):
+            d = (di * bs + row) * w + dj * bs
+            s = (si * bs + row) * w + sj * bs
+            out[d:d + bs] = buf[s:s + bs]
+    return out</code></pre>
+      <div class="cut">Cách xáo ngược, dùng ở bên nhận (dòng 176–179)</div>
+      <pre><code class="language-python">def inverse_perm(perm: list) -&gt; list:
+    inv = [0] * len(perm)
+    for i, v in enumerate(perm): inv[v] = i
+    return inv</code></pre>
+      <div class="cut">Vân tay đối chiếu máy tính và ESP32 (dòng 195–204)</div>
+      <pre><code class="language-python"># --------------------------------- Vân tay -----------------------------------
+def fnv1a64(b: bytes) -&gt; int:
+    h = 0xcbf29ce484222325
+    for c in b:
+        h = ((h ^ c) * 0x100000001b3) &amp; 0xFFFFFFFFFFFFFFFF
+    return h
+
+def perm_fnv(p: list) -&gt; int:
+    """QUY ƯỚC VÂN TAY: mã hóa perm thành uint16 LITTLE-ENDIAN rồi FNV-1a 64 bit."""
+    return fnv1a64(array.array('H', p).tobytes())</code></pre>
+    </div>
+    <div class="codepanel" role="tabpanel" id="pane-c" aria-labelledby="tab-c" hidden>
+      <div class="codehead"><div class="src"><b>Firmware ESP32-CAM</b> (tn17.ino; vùng CORE giữ nguyên văn từ TN16). Bản C là bản dịch trực tiếp của cpe_core.py và tự kiểm vân tay mỗi lần khởi động. Tệp đầy đủ: <a href="ma_do_an/tn17.ino" style="color:var(--code-num)">ma_do_an/tn17.ino</a>.</div><button class="copy" type="button" data-copy="pane-c" data-cmt="//">Sao chép</button></div>
+      <div class="cut">Khóa thử nạp vào thiết bị (dòng 74–77)</div>
+      <pre><code class="language-c">/* K_master THÍ NGHIỆM — 00 01 02 ... 1f. Hệ thật phải nạp khóa riêng. */
+static const uint8_t K_MASTER[32] = {
+  0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0a,0x0b,0x0c,0x0d,0x0e,0x0f,
+  0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19,0x1a,0x1b,0x1c,0x1d,0x1e,0x1f };</code></pre>
+      <div class="cut">Vùng CORE, giữ nguyên văn từ TN16 (dòng 126–168)</div>
+      <pre><code class="language-c">/* ---- xoshiro128** (Q7) — CHỈ số nguyên 32 bit, không lệch nền tảng --- */
+typedef struct { uint32_t s[4]; } xoshiro_t;
+static inline uint32_t rotl32(uint32_t x, int k) { return (x &lt;&lt; k) | (x &gt;&gt; (32 - k)); }
+static uint32_t xoshiro_next(xoshiro_t *g) {
+  uint32_t *s = g-&gt;s;
+  uint32_t out = rotl32(s[1] * 5u, 7) * 9u;
+  uint32_t t = s[1] &lt;&lt; 9;
+  s[2] ^= s[0]; s[3] ^= s[1]; s[1] ^= s[2]; s[0] ^= s[3]; s[2] ^= t;
+  s[3] = rotl32(s[3], 11);
+  return out;
+}
+/* Q7a: 128 bit đầu của thẻ HMAC, mỗi 4 byte đọc BIG-ENDIAN */
+static void xoshiro_seed_from_tag(xoshiro_t *g, const uint8_t *T) {
+  for (int k = 0; k &lt; 4; k++)
+    g-&gt;s[k] = ((uint32_t)T[4*k] &lt;&lt; 24) | ((uint32_t)T[4*k+1] &lt;&lt; 16) |
+              ((uint32_t)T[4*k+2] &lt;&lt; 8) | (uint32_t)T[4*k+3];
+}
+/* Q7b: Fisher-Yates giảm dần + Lemire bounded (KHÔNG chia dư) */
+static void perm_C_from_tag(const uint8_t *T, uint16_t *p, int n) {
+  xoshiro_t g; xoshiro_seed_from_tag(&amp;g, T);
+  for (int i = 0; i &lt; n; i++) p[i] = (uint16_t)i;
+  for (int i = n - 1; i &gt; 0; i--) {
+    uint32_t j = (uint32_t)(((uint64_t)xoshiro_next(&amp;g) * (uint64_t)(i + 1)) &gt;&gt; 32);
+    uint16_t t = p[i]; p[i] = p[j]; p[j] = t;
+  }
+}
+
+/* ---- Áp hoán vị khối: out[khối i] = in[khối perm[i]] ----------------
+ * Cách duyệt THEO KHỐI (TN15: nhanh hơn theo hàng 0,8..4,1 %).        */
+static void permute_blocks(const uint8_t *in, uint8_t *out, const uint16_t *perm) {
+  const int bw = W_IMG / BS;
+  for (int i = 0; i &lt; NBLK; i++) {
+    int src = perm[i];
+    int di = i / bw, dj = i - di * bw;
+    int si = src / bw, sj = src - si * bw;
+    const uint8_t *sp = in  + (si * BS) * W_IMG + sj * BS;
+    uint8_t       *dp = out + (di * BS) * W_IMG + dj * BS;
+    for (int row = 0; row &lt; BS; row++) {
+      for (int c = 0; c &lt; BS; c++) dp[c] = sp[c];
+      sp += W_IMG; dp += W_IMG;
+    }
+  }
+}</code></pre>
+      <div class="cut">Vân tay (dòng 181–195)</div>
+      <pre><code class="language-c">/* ---- FNV-1a 64 bit — chỉ dùng làm VÂN TAY đối chiếu PC &lt;-&gt; ESP32 ---- */
+static uint64_t fnv1a64(const uint8_t *b, uint32_t n) {
+  uint64_t h = 0xcbf29ce484222325ULL;
+  for (uint32_t i = 0; i &lt; n; i++) { h ^= b[i]; h *= 0x100000001b3ULL; }
+  return h;
+}
+static uint64_t perm_fnv(const uint16_t *p, int n) {
+  /* QUY ƯỚC: uint16 LITTLE-ENDIAN rồi FNV-1a */
+  uint64_t h = 0xcbf29ce484222325ULL;
+  for (int i = 0; i &lt; n; i++) {
+    h ^= (uint8_t)(p[i] &amp; 0xFF);   h *= 0x100000001b3ULL;
+    h ^= (uint8_t)(p[i] &gt;&gt; 8);     h *= 0x100000001b3ULL;
+  }
+  return h;
+}</code></pre>
+      <div class="cut">Máy trộn HMAC-SHA256 bằng mbedtls của ESP-IDF (dòng 243–257)</div>
+      <pre><code class="language-c">/* ------------------------ 6. HMAC-SHA256 (Q1+Q2) --------------------- */
+static void hmac_tag(uint32_t counter_n, uint32_t r, uint8_t out32[32]) {
+  uint8_t msg[8];
+  msg[0]=(uint8_t)(counter_n&gt;&gt;24); msg[1]=(uint8_t)(counter_n&gt;&gt;16);
+  msg[2]=(uint8_t)(counter_n&gt;&gt;8);  msg[3]=(uint8_t)(counter_n);
+  msg[4]=(uint8_t)(r&gt;&gt;24); msg[5]=(uint8_t)(r&gt;&gt;16);
+  msg[6]=(uint8_t)(r&gt;&gt;8);  msg[7]=(uint8_t)(r);
+  mbedtls_md_context_t ctx; mbedtls_md_init(&amp;ctx);
+  const mbedtls_md_info_t *info = mbedtls_md_info_from_type(MBEDTLS_MD_SHA256);
+  mbedtls_md_setup(&amp;ctx, info, 1);
+  mbedtls_md_hmac_starts(&amp;ctx, K_MASTER, 32);
+  mbedtls_md_hmac_update(&amp;ctx, msg, 8);
+  mbedtls_md_hmac_finish(&amp;ctx, out32);
+  mbedtls_md_free(&amp;ctx);
+}</code></pre>
+      <div class="cut">Trích hàm do_one_frame: mỗi khung gọi máy trộn rồi tạo cách xáo (dòng 557–571)</div>
+      <pre><code class="language-c">  uint32_t cn = g_counter;
+  uint8_t  rr = 0;                      /* PP-C: KHÔNG có ShortCycleError -&gt; r luôn 0 */
+  uint8_t  T[32];
+
+  ta = micros(); hmac_tag(cn, rr, T); t_hmac = micros() - ta;
+
+  ta = micros();
+#if PERM_MODE == 2
+  perm_C_from_tag(T, g_perm, NBLK);
+  permute_blocks(fb-&gt;buf, g_permed, g_perm);
+  const uint8_t *src = g_permed;
+#else
+  const uint8_t *src = fb-&gt;buf;         /* PERM_MODE 0: đối chứng không mã hóa */
+#endif
+  t_perm = micros() - ta;</code></pre>
+      <div class="cut">Trích hàm in_van_tay: thiết bị tự kiểm vân tay khi khởi động (dòng 462–482)</div>
+      <pre><code class="language-c">static void in_van_tay(uint16_t *perm_buf) {
+  uint8_t T[32]; hmac_tag(0, 0, T);
+  Serial.print("# VANTAY,hmac_T0=");
+  for (int i = 0; i &lt; 8; i++) Serial.printf("%02x", T[i]);
+  Serial.println("  (PC: 9f0cd9b94097fe49)");
+  perm_C_from_tag(T, perm_buf, NBLK);
+  Serial.print("# VANTAY,perm0_dau8=");
+  for (int i = 0; i &lt; 8; i++) Serial.printf("%d ", perm_buf[i]);
+  Serial.println("  (PC: 109 1171 266 101 493 889 1106 419)");
+  Serial.printf("# VANTAY,fnv_n0=0x%016llX   (PC: 0xE4D8CAD02C139271)\n",
+                perm_fnv(perm_buf, NBLK));
+  Serial.printf("# VANTAY,crc16_123456789=0x%04X   (PC: 0x29B1)\n",
+                crc16_ccitt_false((const uint8_t*)"123456789", 9));
+  uint8_t hdr[12];
+  build_header(hdr, 0x06, 0x03, 0x12345678, 0x1290, 0xA61C);
+  Serial.print("# VANTAY,header_mau=");
+  for (int i = 0; i &lt; 12; i++) Serial.printf("%02x", hdr[i]);
+  Serial.println("  (PC: 43010603123456781290a61c)");
+  hmac_tag(12345, 0, T); perm_C_from_tag(T, perm_buf, NBLK);
+  Serial.printf("# VANTAY,fnv_n12345=0x%016llX   (PC: 0x77CDD08E5E99A22D)\n",
+                perm_fnv(perm_buf, NBLK));</code></pre>
+    </div>
+    <div class="codepanel" role="tabpanel" id="pane-rx" aria-labelledby="tab-rx" hidden>
+      <div class="codehead"><div class="src"><b>tn16_receiver.py</b>, bên nhận chính thức: sinh lại cách xáo từ số khung rồi trả các ô về chỗ. Tệp đầy đủ: <a href="ma_do_an/tn16_receiver.py" style="color:var(--code-num)">ma_do_an/tn16_receiver.py</a>.</div><button class="copy" type="button" data-copy="pane-rx" data-cmt="#">Sao chép</button></div>
+      <div class="cut">Hàm decode_frame (dòng 41–52)</div>
+      <pre><code class="language-python">def decode_frame(info):
+    """Giải nén JPEG rồi hoán vị NGHỊCH -&gt; ảnh khôi phục 320x240."""
+    arr = np.array(Image.open(io.BytesIO(info["jpg"])).convert("L"), dtype=np.uint8)
+    if arr.shape != (C.H, C.W):
+        raise ValueError("kich thuoc %s khong phai 240x320" % (arr.shape,))
+    if info["perm_mode"] == 0:
+        return arr, arr
+    T = C.hmac_tag(info["counter"], info["r"])
+    p = C.perm_C_from_tag(T) if info["perm_mode"] == 2 else C.perm_A_from_u23(C.u23_from_tag(T))
+    inv = C.inverse_perm(p)
+    rec = np.frombuffer(bytes(C.permute_blocks(arr.tobytes(), inv)), dtype=np.uint8)
+    return arr, rec.reshape(C.H, C.W)</code></pre>
+    </div>
+    <div class="codepanel" role="tabpanel" id="pane-js" aria-labelledby="tab-js" hidden>
+      <div class="codehead"><div class="src"><b>Bản JavaScript</b> dùng riêng cho trang này để chạy trong trình duyệt, không thuộc mã nguồn đồ án. Đoạn dưới được lấy trực tiếp từ các hàm đang chạy trên trang; nó khớp đủ 4 vân tay ở mục trên.</div><button class="copy" type="button" data-copy="pane-js" data-cmt="//">Sao chép</button></div>
+      <pre><code class="language-javascript" id="jsCode"></code></pre>
+    </div>
+    <p class="note" id="copyMsg" aria-live="polite" style="margin-top:.6rem"></p>
+  </div>
+</section>
+
+<section id="gioi-han">
+  <div class="wrap">
+    <div class="prose"><h2>Nói đúng về con số 2<sup>128</sup></h2>
+      <p>Bốn điều nên nói kèm khi trình bày phần này trước hội đồng.</p></div>
+    <div class="limits">
+      <div class="limit"><h3>Là số đếm theo thiết kế</h3><p>2<sup>128</sup> được đếm từ số công tắc, không đo bằng cách thử hết vì không thể thử hết. Bằng chứng thực nghiệm đi kèm: bảng tra đã phá được PP-A thì với PP-C cho Dc = 0,0000 (Bảng 4.12).</p></div>
+      <div class="limit"><h3>Dựa trên một giả định chuẩn</h3><p>Máy trộn HMAC-SHA256 được giả định là không đoán được đầu ra nếu không có khóa (RFC 2104). Đồ án không tự chứng minh điều này; mọi hệ thống thực tế đều dựa vào nó.</p></div>
+      <div class="limit"><h3>Bước rút thăm lệch rất nhẹ</h3><p>Phép nhân rồi dịch 32 bit không có bước loại bỏ của phương pháp Lemire đầy đủ. Mỗi lượt lệch tối đa khoảng 3 × 10<sup>−7</sup>; không làm giảm số cách xáo.</p></div>
+      <div class="limit"><h3>Khóa thử chỉ để đối chiếu</h3><p>00 01 … 1f là khóa thí nghiệm dùng chung cho máy tính và thiết bị để so vân tay. Hệ thật phải sinh khóa ngẫu nhiên bằng phần cứng và nạp riêng.</p></div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p style="margin:0 0 .4rem">Đồ án tốt nghiệp “Nghiên cứu phương pháp mã hóa cảm nhận và ứng dụng trong IoT”. Thái Hữu Thân, lớp AT19A, mã sinh viên AT190149. Giảng viên hướng dẫn: ThS. Hoàng Thu Phương.</p>
+    <p style="margin:0">Trang minh họa phục vụ báo cáo. Số bảng (3.3, 3.5, 4.12) theo bản thảo đồ án; hãy đối chiếu lại nếu bản cuối đánh số khác.</p>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="data/manifest.js"></script>
+<script>
+"use strict";
+
+/* ===== Phần lõi: bản JavaScript của PP-C (hiển thị ở thẻ mã nguồn) ===== */
+const SHA256_K = new Uint32Array([
+  0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
+  0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
+  0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,
+  0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
+  0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,
+  0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
+  0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
+  0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2]);
+
+function sha256(msg) {
+  const len = msg.length, blen = ((len + 9 + 63) >> 6) << 6;
+  const b = new Uint8Array(blen); b.set(msg); b[len] = 0x80;
+  const bits = len * 8;
+  b[blen - 4] = (bits >>> 24) & 255; b[blen - 3] = (bits >>> 16) & 255;
+  b[blen - 2] = (bits >>> 8) & 255;  b[blen - 1] = bits & 255;
+  let h = [0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];
+  const w = new Uint32Array(64), rotr = (x, k) => (x >>> k) | (x << (32 - k));
+  for (let o = 0; o < blen; o += 64) {
+    for (let i = 0; i < 16; i++) w[i] = (b[o+4*i] << 24) | (b[o+4*i+1] << 16) | (b[o+4*i+2] << 8) | b[o+4*i+3];
+    for (let i = 16; i < 64; i++) {
+      const s0 = rotr(w[i-15], 7) ^ rotr(w[i-15], 18) ^ (w[i-15] >>> 3);
+      const s1 = rotr(w[i-2], 17) ^ rotr(w[i-2], 19) ^ (w[i-2] >>> 10);
+      w[i] = (w[i-16] + s0 + w[i-7] + s1) >>> 0;
+    }
+    let [a, bb, c, d, e, f, g, hh] = h;
+    for (let i = 0; i < 64; i++) {
+      const t1 = (hh + (rotr(e,6) ^ rotr(e,11) ^ rotr(e,25)) + ((e & f) ^ (~e & g)) + SHA256_K[i] + w[i]) >>> 0;
+      const t2 = ((rotr(a,2) ^ rotr(a,13) ^ rotr(a,22)) + ((a & bb) ^ (a & c) ^ (bb & c))) >>> 0;
+      hh = g; g = f; f = e; e = (d + t1) >>> 0; d = c; c = bb; bb = a; a = (t1 + t2) >>> 0;
+    }
+    h = [h[0]+a, h[1]+bb, h[2]+c, h[3]+d, h[4]+e, h[5]+f, h[6]+g, h[7]+hh].map(v => v >>> 0);
+  }
+  const out = new Uint8Array(32);
+  h.forEach((v, i) => { out[4*i] = v >>> 24; out[4*i+1] = (v >>> 16) & 255; out[4*i+2] = (v >>> 8) & 255; out[4*i+3] = v & 255; });
+  return out;
+}
+
+/* Q1 + Q2: M = be32(counter) || be32(r); T = HMAC-SHA256(K_master, M) */
+function hmacTag(key, counter, r = 0) {
+  const msg = new Uint8Array([counter >>> 24, (counter >>> 16) & 255, (counter >>> 8) & 255, counter & 255,
+                              r >>> 24, (r >>> 16) & 255, (r >>> 8) & 255, r & 255]);
+  const k = new Uint8Array(64); k.set(key);
+  const inner = new Uint8Array(64 + 8), outer = new Uint8Array(64 + 32);
+  for (let i = 0; i < 64; i++) { inner[i] = k[i] ^ 0x36; outer[i] = k[i] ^ 0x5c; }
+  inner.set(msg, 64); outer.set(sha256(inner), 64);
+  return sha256(outer);
+}
+
+/* Q3: 128 bit đầu của thẻ, mỗi 4 byte đọc big-endian */
+function seedFromTag(T) {
+  return [0, 1, 2, 3].map(k => ((T[4*k] << 24) | (T[4*k+1] << 16) | (T[4*k+2] << 8) | T[4*k+3]) >>> 0);
+}
+
+/* Q4: xoshiro128**, chỉ số nguyên 32 bit */
+function xoshiroNext(s) {
+  const rotl = (x, k) => ((x << k) | (x >>> (32 - k))) >>> 0;
+  const out = Math.imul(rotl(Math.imul(s[1], 5) >>> 0, 7), 9) >>> 0;
+  const t = (s[1] << 9) >>> 0;
+  s[2] = (s[2] ^ s[0]) >>> 0; s[3] = (s[3] ^ s[1]) >>> 0;
+  s[1] = (s[1] ^ s[2]) >>> 0; s[0] = (s[0] ^ s[3]) >>> 0;
+  s[2] = (s[2] ^ t) >>> 0;    s[3] = rotl(s[3], 11);
+  return out;
+}
+
+/* Q5 + Q6: Fisher–Yates giảm dần, chỉ số j = next() * (i+1) >> 32 */
+function permFromState(state, n = 1200) {
+  const s = state.slice(), p = Array.from({ length: n }, (_, i) => i), draws = [];
+  for (let i = n - 1; i > 0; i--) {
+    const v = xoshiroNext(s);
+    const j = Math.floor(v * (i + 1) / 4294967296);
+    if (draws.length < 3) draws.push({ i, v, j });
+    [p[i], p[j]] = [p[j], p[i]];
+  }
+  return { p, draws };
+}
+
+/* Vân tay: hoán vị viết thành uint16 little-endian rồi FNV-1a 64 bit */
+function permFnv(p) {
+  let h = 0xcbf29ce484222325n;
+  const prime = 0x100000001b3n, mask = (1n << 64n) - 1n;
+  for (const v of p) {
+    h = ((h ^ BigInt(v & 255)) * prime) & mask;
+    h = ((h ^ BigInt(v >>> 8)) * prime) & mask;
+  }
+  return "0x" + h.toString(16).toUpperCase().padStart(16, "0");
+}
+/* ===== Hết phần lõi ===== */
+
+const CORE_FUNCS = [sha256, hmacTag, seedFromTag, xoshiroNext, permFromState, permFnv];
+const KEY_TEST = Uint8Array.from({ length: 32 }, (_, i) => i);
+const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const $ = id => document.getElementById(id);
+const hx = b => b.toString(16).padStart(2, "0");
+const group = x => String(x).replace(/\B(?=(\d{3})+(?!\d))/g, "\u00A0");
+const pct = v => (v / 4294967296 * 100).toFixed(2).replace(".", ",");
+
+/* ---- ảnh gốc tổng hợp 320 x 240 xám ---- */
+const SRC = document.createElement("canvas");
+SRC.width = 320; SRC.height = 240;
+(function drawScene() {
+  const c = SRC.getContext("2d");
+  c.fillStyle = "#c6cdd3"; c.fillRect(0, 0, 320, 240);
+  c.fillStyle = "#e3e7ea";
+  [[70, 34, 30, 11], [104, 30, 22, 9], [180, 58, 26, 9]].forEach(([x, y, rx, ry]) => { c.beginPath(); c.ellipse(x, y, rx, ry, 0, 0, 7); c.fill(); });
+  c.fillStyle = "#f7f7f7"; c.beginPath(); c.arc(264, 46, 24, 0, 7); c.fill();
+  c.lineWidth = 3; c.strokeStyle = "#a3aab0"; c.stroke();
+  c.fillStyle = "#9aa3aa"; c.beginPath(); c.moveTo(0, 170); c.lineTo(70, 128); c.lineTo(140, 160); c.lineTo(220, 118); c.lineTo(320, 162); c.lineTo(320, 190); c.lineTo(0, 190); c.closePath(); c.fill();
+  c.fillStyle = "#6d757b"; c.fillRect(0, 186, 320, 54);
+  c.fillStyle = "#4a5156"; c.beginPath(); c.moveTo(100, 240); c.lineTo(134, 186); c.lineTo(152, 186); c.lineTo(170, 240); c.closePath(); c.fill();
+  c.fillStyle = "#59616a"; c.fillRect(40, 112, 128, 76);
+  c.fillStyle = "#2a2f35"; c.beginPath(); c.moveTo(30, 115); c.lineTo(104, 60); c.lineTo(178, 115); c.closePath(); c.fill();
+  c.fillStyle = "#d7dade"; c.fillRect(92, 142, 26, 46);
+  c.fillStyle = "#eef0f2"; c.fillRect(54, 128, 26, 22); c.fillRect(130, 128, 26, 22);
+  c.strokeStyle = "#59616a"; c.lineWidth = 2;
+  [[67, 128, 67, 150], [54, 139, 80, 139], [143, 128, 143, 150], [130, 139, 156, 139]].forEach(([a, b, d, e]) => { c.beginPath(); c.moveTo(a, b); c.lineTo(d, e); c.stroke(); });
+  c.fillStyle = "#383d42"; c.fillRect(236, 140, 12, 48);
+  c.fillStyle = "#4b535a"; c.beginPath(); c.arc(242, 124, 28, 0, 7); c.fill();
+  c.fillStyle = "#5c646b"; c.beginPath(); c.arc(226, 136, 16, 0, 7); c.fill();
+  c.fillStyle = "#1b2025"; c.font = "800 23px 'Be Vietnam Pro', system-ui, sans-serif"; c.textAlign = "center";
+  c.fillText("ESP32-CAM", 238, 226);
+})();
+
+/* ---- khung hiển thị 1 200 ô, có hoạt cảnh di chuyển ---- */
+class TileView {
+  constructor(canvas) {
+    this.ctx = canvas.getContext("2d"); this.ctx.imageSmoothingEnabled = false;
+    this.x = new Float32Array(1200); this.y = new Float32Array(1200); this.raf = 0;
+    for (let b = 0; b < 1200; b++) { this.x[b] = (b % 40) * 8; this.y[b] = Math.floor(b / 40) * 8; }
+    this.draw();
+  }
+  draw() {
+    const c = this.ctx; c.fillStyle = "#8a939a"; c.fillRect(0, 0, 320, 240);
+    for (let b = 0; b < 1200; b++) c.drawImage(SRC, (b % 40) * 8, Math.floor(b / 40) * 8, 8, 8, this.x[b], this.y[b], 8, 8);
+  }
+  show(perm, animate) {
+    const tx = new Float32Array(1200), ty = new Float32Array(1200);
+    for (let i = 0; i < 1200; i++) { const b = perm[i]; tx[b] = (i % 40) * 8; ty[b] = Math.floor(i / 40) * 8; }
+    cancelAnimationFrame(this.raf);
+    if (!animate || reduceMotion) { this.x = tx; this.y = ty; this.draw(); return; }
+    const fx = this.x.slice(), fy = this.y.slice(), t0 = performance.now(), dur = 900;
+    const ease = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    const step = now => {
+      const t = Math.min(1, (now - t0) / dur);
+      for (let b = 0; b < 1200; b++) {
+        const lag = (fx[b] / 320) * 0.3, u = Math.min(1, Math.max(0, (t - lag) / 0.7)), e = ease(u);
+        this.x[b] = fx[b] + (tx[b] - fx[b]) * e; this.y[b] = fy[b] + (ty[b] - fy[b]) * e;
+      }
+      this.draw();
+      if (t < 1) this.raf = requestAnimationFrame(step);
+    };
+    this.raf = requestAnimationFrame(step);
+  }
+}
+
+const IDENTITY = Array.from({ length: 1200 }, (_, i) => i);
+const heroView = new TileView($("heroCanvas"));
+const mixView = new TileView($("mixCanvas"));
+new TileView($("origCanvas"));
+
+/* ---- trạng thái chung của máy ---- */
+const S = { key: KEY_TEST.slice(), n: 0, state: [0, 0, 0, 0], manual: false, perm: IDENTITY, prev: null, prevState: null, act: "Khóa thử của đồ án, khung số 0", heroUndone: false, first: true };
+
+/* ---- ngân hàng 128 công tắc ---- */
+const swEls = [];
+(function buildDip() {
+  const bank = $("dipBank");
+  for (let k = 0; k < 4; k++) {
+    const lab = document.createElement("div"); lab.className = "dip-lab"; lab.id = "dipLab" + k; bank.appendChild(lab);
+    const row = document.createElement("div"); row.className = "dip"; row.setAttribute("role", "group"); row.setAttribute("aria-label", "32 công tắc của số thứ " + (k + 1));
+    for (let c = 0; c < 32; c++) {
+      const b = document.createElement("button"); b.type = "button"; b.className = "sw";
+      const idx = k * 32 + c + 1;
+      b.setAttribute("aria-label", "Công tắc " + idx);
+      b.addEventListener("click", () => {
+        S.state[k] = (S.state[k] ^ (1 << (31 - c))) >>> 0; S.manual = true;
+        S.act = "Gạt tay công tắc số " + idx + " trên 128"; render();
+      });
+      row.appendChild(b); swEls.push(b);
+    }
+    bank.appendChild(row);
+  }
+})();
+
+function compute() {
+  const T = hmacTag(S.key, S.n, 0);
+  $("tagHex").innerHTML = '<span class="used">' + Array.from(T.slice(0, 16), hx).join(" ") + '</span> <span class="unused">' + Array.from(T.slice(16), hx).join(" ") + "</span>";
+  S.state = seedFromTag(T); S.manual = false; render();
+}
+
+function render() {
+  $("keyHex").textContent = Array.from(S.key, hx).join(" ");
+  $("nVal").textContent = group(S.n);
+  const m = [S.n >>> 24, (S.n >>> 16) & 255, (S.n >>> 8) & 255, S.n & 255, 0, 0, 0, 0];
+  $("msgHex").textContent = m.map(hx).join(" ");
+  $("manualNote").textContent = S.manual ? "Đang gạt tay: 128 công tắc không còn lấy từ máy trộn ở bước 3. Khi chỉ 1 công tắc khác đi, vài lượt rút đầu gần như không đổi nên vài ô cuối hàng thường giữ nguyên chỗ, trung bình khoảng 4 ô thay vì 1. Đó là lý do cần máy trộn: giữa hai khung liền nhau nó đổi khoảng 64 công tắc chứ không phải 1. Bấm nút ở bước 1 hoặc 2 để quay lại." : "";
+  if (S.prevState) {
+    let d = 0; for (let k = 0; k < 4; k++) { let x = (S.prevState[k] ^ S.state[k]) >>> 0; while (x) { d += x & 1; x >>>= 1; } }
+    $("swDiff").textContent = d + " / 128 công tắc đổi thế";
+  }
+  S.prevState = S.state.slice();
+  for (let k = 0; k < 4; k++) {
+    $("dipLab" + k).innerHTML = "Số thứ " + (k + 1) + " = <b>" + group(S.state[k]) + "</b>";
+    for (let c = 0; c < 32; c++) {
+      const on = (S.state[k] >>> (31 - c)) & 1, el = swEls[k * 32 + c];
+      el.classList.toggle("on", !!on); el.setAttribute("aria-pressed", on ? "true" : "false");
+    }
+  }
+  const r = permFromState(S.state);
+  $("drawBody").innerHTML = r.draws.map((d, ix) => "<tr><td>" + (ix + 1) + "</td><td>ô\u00A0" + group(d.i) + "</td><td>" + group(d.v) + "</td><td>" + pct(d.v) + "\u00A0%</td><td>ô\u00A0" + group(d.j) + "</td></tr>").join("");
+  const d0 = r.draws[0];
+  const raw = (d0.v / 4294967296 * (d0.i + 1)).toFixed(2).replace(".", ",");
+  $("worked").innerHTML = "<strong>Lượt 1 tính tay:</strong> " + group(d0.v) + " ÷ 4\u00A0294\u00A0967\u00A0296 = " + pct(d0.v) + " %. Lấy " + pct(d0.v) + " % của " + group(d0.i + 1) + " ô được " + raw + ", bỏ phần lẻ còn <strong>ô " + group(d0.j) + "</strong>. Đổi chỗ ô " + group(d0.i) + " với ô " + group(d0.j) + ".";
+  $("permHead").textContent = r.p.slice(0, 8).join(", ") + ", …";
+  let same = "chưa có lần trước";
+  if (S.prev) { let c = 0; for (let i = 0; i < 1200; i++) if (S.prev[i] === r.p[i]) c++; same = c + " / 1\u00A0200 ô"; }
+  S.prev = r.p; S.perm = r.p;
+  $("sameCount").textContent = same; $("lastAct").textContent = S.act;
+  mixView.show(r.p, !S.first);
+  if (!S.first) { heroView.show(r.p, true); setHero(false); }
+  $("heroCap").textContent = (S.manual ? "Công tắc gạt tay" : "Khung số " + group(S.n) + (isTestKey() ? ", khóa thử của đồ án" : ", khóa khác"));
+}
+
+function isTestKey() { for (let i = 0; i < 32; i++) if (S.key[i] !== i) return false; return true; }
+function setHero(undone) { S.heroUndone = undone; $("heroUndo").textContent = undone ? "Xem lại ảnh đã xáo" : "Bên nhận xếp lại"; }
+
+$("kTest").addEventListener("click", () => { S.key = KEY_TEST.slice(); S.act = "Dùng lại khóa thử của đồ án"; compute(); });
+$("kFlip").addEventListener("click", () => {
+  const bit = Math.floor(Math.random() * 256); S.key[bit >> 3] ^= 1 << (7 - (bit & 7));
+  S.act = "Đổi đúng 1 bit (bit số " + (bit + 1) + " trên 256) của khóa chủ"; compute();
+});
+$("kRand").addEventListener("click", () => {
+  if (window.crypto && crypto.getRandomValues) crypto.getRandomValues(S.key); else for (let i = 0; i < 32; i++) S.key[i] = Math.floor(Math.random() * 256);
+  S.act = "Thay bằng một khóa chủ khác"; compute();
+});
+$("nMinus").addEventListener("click", () => { if (S.n > 0) { S.n--; S.act = "Lùi về khung số " + group(S.n); compute(); } });
+$("nPlus").addEventListener("click", () => { S.n++; S.act = "Chuyển sang khung số " + group(S.n); compute(); });
+$("heroNext").addEventListener("click", () => { S.n++; S.act = "Chuyển sang khung số " + group(S.n); compute(); });
+$("heroUndo").addEventListener("click", () => {
+  if (S.heroUndone) { heroView.show(S.perm, true); setHero(false); $("heroCap").textContent = "Khung số " + group(S.n) + " sau khi xáo"; }
+  else { heroView.show(IDENTITY, true); setHero(true); $("heroCap").textContent = "Bên nhận đã xếp lại khung số " + group(S.n); }
+});
+
+compute();
+S.first = false;
+heroView.show(IDENTITY, false);
+setTimeout(() => heroView.show(S.perm, true), reduceMotion ? 0 : 600);
+
+/* ---- ví dụ tí hon ---- */
+const TOY = { "00": [1, 1], "01": [2, 2], "10": [3, 1], "11": [1, 2] };
+const toy = { a: 0, b: 0 };
+function toyApply(j1, j2) {
+  const s0 = ["A", "B", "C"], s1 = s0.slice(); [s1[2], s1[j1 - 1]] = [s1[j1 - 1], s1[2]];
+  const s2 = s1.slice(); [s2[1], s2[j2 - 1]] = [s2[j2 - 1], s2[1]];
+  return [s0, s1, s2];
+}
+function toyRender() {
+  const key = "" + toy.a + toy.b, [j1, j2] = TOY[key], [s0, s1, s2] = toyApply(j1, j2);
+  ["toyS1", "toyS2"].forEach((id, i) => { const on = i === 0 ? toy.a : toy.b; $(id).setAttribute("aria-pressed", on ? "true" : "false"); $(id + "t").textContent = on ? "đang bật" : "đang tắt"; });
+  $("toyRule").innerHTML = "Với thế <strong>" + (toy.a ? "bật" : "tắt") + " – " + (toy.b ? "bật" : "tắt") + "</strong>, máy rút: lượt 1 ra vị trí <strong>" + j1 + "</strong>, lượt 2 ra vị trí <strong>" + j2 + "</strong>.";
+  const row = (lb, s, hit) => '<div class="lb">' + lb + '</div><div class="set">' + s.map((t, i) => '<div class="tile ' + t + (hit.includes(i) ? " hit" : "") + '">' + t + "</div>").join("") + "</div>";
+  $("toyTiles").innerHTML = row("Ban đầu", s0, []) + row("Sau lượt 1", s1, j1 === 3 ? [2] : [2, j1 - 1]) + row("Sau lượt 2", s2, j2 === 2 ? [1] : [1, j2 - 1]);
+  const all = ["ABC", "ACB", "BAC", "BCA", "CAB", "CBA"], reach = Object.values(TOY).map(([a, b]) => toyApply(a, b)[2].join("")), now = s2.join("");
+  $("toyChips").innerHTML = all.map(w => {
+    const r = reach.includes(w), cls = w === now ? "chip now" : r ? "chip" : "chip never";
+    const st = w === now ? "đang ra" : r ? "tạo được" : "không bao giờ";
+    return '<div class="' + cls + '"><span class="w">' + w.split("").join(" ") + '</span><span class="s">' + st + "</span></div>";
+  }).join("");
+}
+$("toyS1").addEventListener("click", () => { toy.a ^= 1; toyRender(); });
+$("toyS2").addEventListener("click", () => { toy.b ^= 1; toyRender(); });
+toyRender();
+
+/* ---- thanh trượt số công tắc ---- */
+function countRender() {
+  const k = +$("kSlider").value, v = (1n << BigInt(k)).toString();
+  $("kOut").textContent = k; $("countOut").textContent = "2^" + k + " = " + group(v);
+  $("digitsOut").textContent = "Số có " + v.length + " chữ số.";
+  let msg = "Thêm 1 công tắc thì số thế gấp đôi. Máy tí hon ở trên có 2 công tắc: 4 thế, 4 cách xáo.";
+  const c = $("kCallout"); c.className = "callout";
+  if (k === 23) { msg = "Mức của PP-A trên giấy: 23 bit, 8 388 608 khả năng. Nhưng làm tròn số thực gộp chúng lại, thực tế chỉ còn 190 277 cách xáo (Bảng 4.12)."; c.className = "callout secret"; }
+  else if (k === 128) { msg = "Mức của PP-C: 128 công tắc. Máy chỉ dùng số nguyên và không gộp thế nào, nên mỗi thế cho một cách xáo riêng."; c.className = "callout secret"; }
+  else if (k === 2) msg = "Đúng máy tí hon ở trên: 2 công tắc, 4 thế, 4 cách xáo.";
+  else if (k === 10) msg = "10 công tắc đã cho hơn một nghìn thế.";
+  c.textContent = msg;
+}
+$("kSlider").addEventListener("input", countRender);
+countRender();
+
+/* ---- vân tay Bảng 3.5 ---- */
+(function fingerprints() {
+  const T0 = hmacTag(KEY_TEST, 0, 0), p0 = permFromState(seedFromTag(T0)).p, p12345 = permFromState(seedFromTag(hmacTag(KEY_TEST, 12345, 0))).p;
+  const rows = [
+    ["T[0…7] với n = 0, r = 0", "9f 0c d9 b9 40 97 fe 49", Array.from(T0.slice(0, 8), hx).join(" ")],
+    ["π[0…7] với n = 0", "109 1171 266 101 493 889 1106 419", p0.slice(0, 8).join(" ")],
+    ["FNV-1a 64 của π với n = 0", "0xE4D8CAD02C139271", permFnv(p0)],
+    ["FNV-1a 64 của π với n = 12345", "0x77CDD08E5E99A22D", permFnv(p12345)],
+  ];
+  let ok = 0;
+  $("fpBody").innerHTML = rows.map(([name, exp, got]) => {
+    const m = exp === got; if (m) ok++;
+    return "<tr><td>" + name + '</td><td class="exp">' + exp + '</td><td class="got">' + got + '</td><td><span class="badge ' + (m ? "ok" : "bad") + '">' + (m ? "Khớp" : "Lệch") + "</span></td></tr>";
+  }).join("");
+  $("fpSum").textContent = ok === rows.length ? "Khớp " + ok + "/" + rows.length + ": trang này tạo ra đúng cách xáo như cpe_core.py và firmware ESP32." : "Chỉ khớp " + ok + "/" + rows.length + ". Bản JavaScript đang lệch đặc tả.";
+})();
+
+/* ---- mã nguồn: thẻ, tô màu, sao chép ---- */
+$("jsCode").textContent = "// Bản JavaScript của PP-C dùng trên trang này (không thuộc mã nguồn đồ án)\n\nconst SHA256_K = new Uint32Array([/* 64 hằng số chuẩn của SHA-256 */]);\n\n" + CORE_FUNCS.map(f => f.toString()).join("\n\n");
+const tabs = Array.from(document.querySelectorAll(".tab"));
+function selectTab(t, focus) {
+  tabs.forEach(x => { const on = x === t; x.setAttribute("aria-selected", on ? "true" : "false"); x.tabIndex = on ? 0 : -1; $(x.getAttribute("aria-controls")).hidden = !on; });
+  if (focus) t.focus();
+}
+tabs.forEach((t, i) => {
+  t.addEventListener("click", () => selectTab(t, false));
+  t.addEventListener("keydown", e => {
+    if (e.key === "ArrowRight" || e.key === "ArrowLeft") { e.preventDefault(); selectTab(tabs[(i + (e.key === "ArrowRight" ? 1 : tabs.length - 1)) % tabs.length], true); }
+  });
+});
+try { if (window.hljs) document.querySelectorAll(".codepanel pre code").forEach(el => hljs.highlightElement(el)); } catch (e) {}
+document.querySelectorAll(".copy").forEach(btn => btn.addEventListener("click", async () => {
+  const pane = $(btn.dataset.copy);
+  const parts = Array.from(pane.querySelectorAll(".cut, pre code")).map(el => el.classList.contains("cut") ? "\n" + (btn.dataset.cmt || "#") + " ⋯ " + el.textContent + " ⋯\n" : el.textContent);
+  const text = parts.join("\n");
+  try { await navigator.clipboard.writeText(text); btn.textContent = "Đã sao chép"; $("copyMsg").textContent = ""; }
+  catch (e) {
+    const ta = document.createElement("textarea"); ta.value = text; ta.style.position = "absolute"; ta.style.left = "-9999px"; document.body.appendChild(ta); ta.select();
+    let done = false; try { done = document.execCommand("copy"); } catch (e2) {}
+    ta.remove();
+    btn.textContent = done ? "Đã sao chép" : "Sao chép";
+    $("copyMsg").textContent = done ? "" : "Trình duyệt chặn sao chép tự động. Hãy bôi đen đoạn mã rồi nhấn Ctrl+C.";
+  }
+  setTimeout(() => { btn.textContent = "Sao chép"; }, 1800);
+}));
+
+/* ---- ảnh chạy qua hệ thống (đọc data/manifest.js do tools/dung_trang.py sinh ra) ---- */
+(function heThong() {
+  const D = window.CPE_DATA;
+  const vn = (x, d = 2) => Number(x).toFixed(d).replace(".", ",");
+  const sign = x => (x > 0 ? "+" : x < 0 ? "−" : "") + vn(Math.abs(x));
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  if (!D || !D.anh || D.anh.length === 0) { $("htEmpty").hidden = false; return; }
+  $("htBody").hidden = false;
+  const T = D.tong_hop, vtOk = D.van_tay.filter(v => v.khop).length;
+  const card = (k, v, s) => '<div class="metric"><div class="k">' + k + '</div><div class="v">' + v + '</div><div class="s">' + s + "</div></div>";
+  let m = card("Ảnh đã xử lý", T.so_anh, T.so_ban_tin_that ? "và " + T.so_ban_tin_that + " bản tin thật từ ESP32-CAM" : "chạy mô phỏng đủ bên gửi và bên nhận");
+  if (T.so_anh) {
+    m += card("Khôi phục trùng từng byte", T.trung_tung_byte + " / " + T.so_anh, "so với JPEG không mã hóa cùng Q = " + D.tham_so.q);
+    m += card("Phình kích thước (trung vị)", sign(T.delta_pt_trung_vi) + " %", "dải " + sign(T.delta_pt_min) + " % đến " + sign(T.delta_pt_max) + " %, đo trên máy tính");
+  }
+  m += card("Kiểm tra trước khi chạy", vtOk + "/" + D.van_tay.length + " vân tay", D.tu_kiem_ben_nhan.dat ? "tự kiểm bên nhận TN16 đạt" : "tự kiểm bên nhận KHÔNG đạt");
+  $("htMetrics").innerHTML = m;
+
+  const items = D.anh;
+  $("htThumbs").innerHTML = items.map((it, i) => {
+    const src = it.tep ? (it.tep.goc || it.tep.khoi_phuc || it.tep.ma) : "";
+    const nhan = it.loai === "esp32_that" ? "Bản tin thật" : "n = " + it.n;
+    return '<button type="button" class="thumb" data-i="' + i + '" aria-pressed="false">' + (src ? '<img src="' + esc(src) + '" alt="" loading="lazy">' : '<div class="flow3"><div class="none">Hỏng</div></div>') + "<span>" + esc(it.tep_goc) + '</span><span class="k">' + nhan + "</span></button>";
+  }).join("");
+
+  const goc = items.filter(it => it.loai === "mo_phong");
+  $("htTable").innerHTML = "<thead><tr><th>Ảnh</th><th>Khung n</th><th>JPEG thường (B)</th><th>JPEG sau xáo (B)</th><th>Phình</th><th>SSIM ảnh mã</th><th>Trùng từng byte</th></tr></thead><tbody>" +
+    items.map((it, i) => it.loai === "mo_phong"
+      ? '<tr class="rowsel" data-i="' + i + '"><td>' + esc(it.tep_goc) + "</td><td>" + it.n + "</td><td>" + group(it.jpeg_thuong_B) + "</td><td>" + group(it.jpeg_ma_B) + "</td><td>" + sign(it.delta_pt) + " %</td><td>" + (it.ssim_ma == null ? "—" : vn(it.ssim_ma, 4)) + "</td><td>" + (it.trung_tung_byte ? '<span class="okmark">Có</span>' : '<span class="badmark">Không</span>') + "</td></tr>"
+      : '<tr class="rowsel" data-i="' + i + '"><td>' + esc(it.tep_goc) + " (bản tin thật)</td><td>" + (it.n ?? "—") + "</td><td>—</td><td>" + (it.jpeg_ma_B ? group(it.jpeg_ma_B) : "—") + "</td><td>—</td><td>—</td><td>" + (it.crc_dung ? "không có ảnh gốc để so" : '<span class="badmark">CRC hỏng</span>') + "</td></tr>").join("") + "</tbody>";
+
+  const lg = ["Sinh lúc: " + D.sinh_luc, "Q = " + D.tham_so.q + ", khung đầu n0 = " + D.tham_so.n0 + ", r = " + D.tham_so.r, "Khóa: " + D.tham_so.khoa, "Bộ nén: " + D.tham_so.bo_nen, "Python " + D.tham_so.python + ", numpy " + D.tham_so.numpy, "", "Vân tay Bảng 3.5:"]
+    .concat(D.van_tay.map(v => "  " + (v.khop ? "KHỚP  " : "LỆCH  ") + v.ten + ": " + v.tinh_duoc)).concat(["", D.tu_kiem_ben_nhan.nhat_ky]);
+  $("htLog").textContent = lg.join("\n");
+
+  const seg = (b, l, cls) => '<span class="seg' + (cls ? " " + cls : "") + '"><span class="b">' + b + '</span><span class="l">' + l + "</span></span>";
+  const row = (k, v) => "<tr><th scope=\"row\" style=\"white-space:normal\">" + k + "</th><td style=\"white-space:normal\">" + v + "</td></tr>";
+  function show(i) {
+    const it = items[i];
+    document.querySelectorAll(".thumb").forEach(b => b.setAttribute("aria-pressed", +b.dataset.i === i ? "true" : "false"));
+    document.querySelectorAll("#htTable .rowsel").forEach(r => r.classList.toggle("sel", +r.dataset.i === i));
+    let h = "<h3>" + esc(it.tep_goc) + (it.loai === "esp32_that" ? " — bản tin thật từ ESP32-CAM" : "") + "</h3>";
+    if (it.loai === "esp32_that" && !it.crc_dung) {
+      $("htDetail").innerHTML = h + '<p class="badmark">Bên nhận từ chối bản tin: ' + esc(it.loi) + ".</p><p>Bản tin dài " + group(it.ban_tin_B) + " B. Đúng như thiết kế: bản tin sai CRC bị bỏ, không được giải mã.</p>";
+      return;
+    }
+    const fig = (src, b, s) => src ? '<figure><img src="' + esc(src) + '" alt="' + esc(b) + '"><figcaption class="cap"><b>' + b + "</b>" + s + "</figcaption></figure>" : '<figure><div class="none">Không có ảnh gốc: bản tin thật chỉ có phía bên nhận</div><figcaption class="cap"><b>' + b + "</b>" + s + "</figcaption></figure>";
+    h += '<div class="flow3">' +
+      fig(it.tep.goc, "Ảnh gốc", it.loai === "mo_phong" ? "320 × 240 xám, chỉ thiết bị thấy" : "") +
+      '<div class="arrow" aria-hidden="true">→</div>' +
+      fig(it.tep.ma, "Bản tin trên đường truyền", group(it.jpeg_ma_B) + " B JPEG, ai cũng mở được") +
+      '<div class="arrow" aria-hidden="true">→</div>' +
+      fig(it.tep.khoi_phuc, "Bên nhận khôi phục", "dùng cùng khóa và số khung n = " + it.n) + "</div>";
+    const td = it.tieu_de;
+    h += '<p style="margin:1.5rem 0 0;font-size:.95rem">Bản tin gồm 12 byte tiêu đề rồi tới tệp JPEG. Chỉ số khung đi kèm; khóa và cách xáo không bao giờ được gửi.</p><div class="pkt">' +
+      seg(td.magic, "MAGIC") + seg(td.ver, "VER") + seg(td.flags, "FLAGS") + seg(td.r, "r") + seg(td.counter, "số khung n", "cnt") + seg(td.len, "LEN") + seg(td.crc, "CRC-16") + seg(td.jpeg_dau + " …", "JPEG", "jpg") + "</div>";
+    h += '<div class="scroll" style="margin-top:1rem"><table class="tbl">';
+    if (it.loai === "mo_phong") {
+      h += row("Tệp gốc", esc(it.tep_goc) + " (" + it.kich_thuoc_goc.join(" × ") + (it.giu_nguyen_320x240 ? ", giữ nguyên từng điểm ảnh)" : ", đã thu về 320 × 240 xám)")) +
+        row("Số thứ tự khung n", it.n + ", gửi công khai trong tiêu đề") +
+        row("128 công tắc (16 byte đầu của thẻ HMAC)", '<span class="hex">' + it.T_dau16 + "</span>") +
+        row("Tám dòng đầu của cách xáo", '<span class="perm">' + it.pi_dau8.join(", ") + ", …</span>") +
+        row("JPEG không mã hóa (đối chứng)", group(it.jpeg_thuong_B) + " B") +
+        row("JPEG sau khi xáo", group(it.jpeg_ma_B) + " B") +
+        row("Phình thêm do mã hóa", sign(it.delta_B).replace(",00", "") + " B (" + sign(it.delta_pt) + " %), tức " + vn(it.bit_moi_khoi) + " bit mỗi khối") +
+        row("Bản tin trên đường truyền", group(it.ban_tin_B) + " B = 12 B tiêu đề + " + group(it.jpeg_ma_B) + " B JPEG") +
+        row("Bên nhận kiểm CRC", '<span class="okmark">Đúng</span>') +
+        row("Khôi phục", it.trung_tung_byte ? '<span class="okmark">Trùng từng byte</span> với JPEG không mã hóa cùng Q = ' + it.q : '<span class="badmark">Lệch ' + it.byte_lech_khi_khoi_phuc + " byte</span>") +
+        row("Mức che giấu của ảnh mã", "PSNR " + vn(it.psnr_ma_dB, 2) + " dB" + (it.ssim_ma == null ? "" : ", SSIM " + vn(it.ssim_ma, 4)) + " so với ảnh gốc");
+    } else {
+      h += row("Tệp bản tin", esc(it.tep_goc) + ", " + group(it.ban_tin_B) + " B") +
+        row("Số thứ tự khung n", it.n + " (r = " + it.r + ")") +
+        row("FLAGS", "chế độ hoán vị " + it.perm_mode + (it.perm_mode === 2 ? " (PP-C)" : "") + ", chỉ số Q " + it.q_idx) +
+        row("Bên nhận kiểm CRC", '<span class="okmark">Đúng</span>') +
+        row("Khôi phục", "bằng đúng decode_frame của tn16_receiver.py; không có ảnh gốc nên không so từng byte");
+    }
+    h += "</table></div>";
+    h += '<div class="dl"><a href="' + esc(it.tep.ban_tin) + '" download>Tải bản tin .bin</a><a href="' + esc(it.tep.ma) + '" download>Tải ảnh mã .jpg</a>' + (it.tep.khoi_phuc ? '<a href="' + esc(it.tep.khoi_phuc) + '" download>Tải ảnh khôi phục .png</a>' : "") + "</div>";
+    $("htDetail").innerHTML = h;
+  }
+  document.querySelectorAll(".thumb").forEach(b => b.addEventListener("click", () => show(+b.dataset.i)));
+  document.querySelectorAll("#htTable .rowsel").forEach(r => r.addEventListener("click", () => { show(+r.dataset.i); $("htDetail").scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "nearest" }); }));
+  show(Math.max(0, items.findIndex(it => it.loai === "mo_phong")));
+})();
+</script>
+</body>
+</html>
