@@ -1,6 +1,6 @@
 /* Tệp sinh tự động bởi tools/dung_trang.py — không sửa tay. */
 window.CPE_DATA = {
- "sinh_luc": "2026-10-09 09:29:48",
+ "sinh_luc": "2026-10-09 10:21:46",
  "tham_so": {
   "q": 20,
   "n0": 0,
