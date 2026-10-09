@@ -1,13 +1,13 @@
 /* Tệp sinh tự động bởi tools/dung_trang.py — không sửa tay. */
 window.CPE_DATA = {
- "sinh_luc": "2026-10-09 09:20:41",
+ "sinh_luc": "2026-10-09 09:29:48",
  "tham_so": {
   "q": 20,
   "n0": 0,
   "r": 0,
   "khoa": "khóa thử 00 01 … 1f (K_MASTER_TEST)",
-  "bo_nen": "Pillow 12.1.1 (libjpeg-turbo), optimize=False",
-  "python": "3.12.3",
+  "bo_nen": "Pillow 12.2.0 (libjpeg-turbo), optimize=False",
+  "python": "3.13.16",
   "numpy": "2.4.4"
  },
  "van_tay": [
