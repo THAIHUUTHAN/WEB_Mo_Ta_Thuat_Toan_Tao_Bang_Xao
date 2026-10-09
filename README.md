@@ -1,8 +1,11 @@
 # doan-cpe-web — mô hình web của đồ án mã hóa cảm nhận trên ESP32-CAM
 
-Đặt ảnh vào thư mục `anh/`, chạy một lệnh, và trang `index.html` hiển thị mỗi ảnh đi qua
-đúng chuỗi xử lý của đồ án: xám 320×240 → xáo 1 200 khối bằng PP-C → JPEG Q = 20 → bản tin
-12 byte tiêu đề + CRC → bên nhận kiểm CRC, giải nén, xáo ngược → ảnh khôi phục.
+Trang `index.html` giải thích cách khóa bí mật và số khung n tạo ra cách xáo 1 200 ô của ảnh,
+rồi trình bày mã nguồn của đồ án kèm chú thích dễ hiểu.
+
+`tools/dung_trang.py` vẫn chạy được chuỗi xử lý của đồ án trên ảnh trong `anh/`: xám 320×240 →
+xáo 1 200 khối bằng PP-C → JPEG Q = 20 → bản tin 12 byte tiêu đề + CRC → bên nhận kiểm CRC, giải
+nén, xáo ngược → ảnh khôi phục. Kết quả nằm ở `data/`; trang không còn hiển thị phần này.
 
 Mọi phép mật mã và giải mã gọi thẳng mã của đồ án trong `ma_do_an/`
 (`cpe_core.py`, `tn16_receiver.py`). Trước khi xử lý ảnh, script kiểm 5 vân tay của
@@ -24,12 +27,12 @@ Tham số: `--q 10|20|30|40` (mặc định 20, đúng cấu hình đồ án), `
 
 ## Trang hiển thị gì
 
-- **Ảnh chạy qua hệ thống**: số ảnh, số ảnh khôi phục trùng từng byte, phình kích thước
-  trung vị và dải; với từng ảnh: ảnh gốc → ảnh mã trên đường truyền → ảnh khôi phục, 12 byte
-  tiêu đề, 128 công tắc, kích thước JPEG có và không mã hóa, PSNR/SSIM của ảnh mã; tải được
-  bản tin `.bin`.
-- **Máy tạo cách xáo**: ví dụ 3 ô 2 công tắc, máy thật từng bước, vì sao có 2^128 cách
-  xáo, tự kiểm vân tay, mã nguồn trích nguyên văn, bốn điều nên nói kèm.
+- **Cách xáo**: trình chiếu 7 bước, từ ví dụ 3 ô 2 công tắc tới máy thật (khóa, số khung,
+  HMAC-SHA256, 128 công tắc, máy rút thăm, cách xáo), với ảnh `anh/nt01_khu_vuon.png`.
+- **Vì sao 2^128**: thanh trượt số công tắc và ba ý chính.
+- **Mã nguồn**: Phụ lục C bản V2.10 (Python sinh cách xáo, Python xáo và xếp lại ảnh, bản C trên
+  ESP32-CAM), giữ nguyên từng dòng lệnh, chú thích viết lại cho dễ hiểu.
+- Vân tay của bản JavaScript chạy ngầm; lệch thì trang hiện cảnh báo.
 
 ## Sát đồ án tới đâu
 

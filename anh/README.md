@@ -8,3 +8,5 @@
 - Ảnh khác kích thước được đổi sang xám rồi cắt giữa và thu về 320 × 240 (Pillow, LANCZOS).
 - Thứ tự xử lý theo tên tệp; ảnh thứ i nhận số khung n = n0 + i (mặc định n0 = 0).
 - `mau_esp32cam.png` là ảnh mẫu tổng hợp, có thể xóa.
+- `nt01_khu_vuon.png` (xám 320 × 240) là ảnh minh họa mà `index.html` dùng. Đổi tên hay xóa
+  thì trang quay về hình vẽ sẵn.
